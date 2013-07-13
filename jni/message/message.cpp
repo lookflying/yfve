@@ -101,7 +101,7 @@ void unescape(string str, string &unescaped){
 }
 
 
-bool deserialize_header(string str, msg_header_t header){
+bool deserialize_header(string str, msg_header_t &header){
 	if (str.size() < MSG_HEADER_MIN_SIZE){
 		return false;
 	}else{

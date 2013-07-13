@@ -41,7 +41,7 @@ TEST(pack_test, escape_then_unescape){
 
 extern string header2string(const msg_header_t header);
 
-extern bool deserialize_header(string str, msg_header_t header);
+extern bool deserialize_header(string str, msg_header_t &header);
 TEST(pack_test, serialize_header){
 	MSG_BCD phone_num[] = {0,0,1,2,3,4,5,6,7,8,9,0,};
 	msg_header_t header = generate_header(0x0001, MSG_PACK_PROPERTY(true, 0x07, 128), &phone_num[0], 2, generate_pack_option(2, 1));
