@@ -101,7 +101,7 @@ void unescape(string str, string &unescaped){
 }
 
 
-bool deserialize_header(string str, msg_header_t header, MSG_WORD &property, MSG_WORD &pack_opt){
+bool deserialize_header(string str, msg_header_t header){
 	if (str.size() < MSG_HEADER_MIN_SIZE){
 		return false;
 	}else{
@@ -130,6 +130,19 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message)
 }
 
 msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq, msg_pack_opt_t pack_opt){
-	
+	msg_header_t header;
+	header.id = id;
+	header.property = property;
+	memcpy(&header.phone_num[0], phone_num, MSG_PHONE_NUM_LEN);
+	header.seq = seq;
+	header.pack_opt = pack_opt;
+	return header;
 }
 
+
+msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq){
+	msg_pack_opt_t pack_opt;
+	pack_opt.pack_count = pack_count;
+	pack_opt.pack_seq = pack_seq;
+	return pack_opt;
+}

@@ -51,8 +51,8 @@ typedef struct msg_serialized_message{
 bool serialize(msg_message_t message, msg_serialized_message_t &serialized);
 bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
 
-#define PACK_PROPERTY(divided, encrypt, length) \
-	(0x00|(divided?0x2000:0x0000)|(encrypt&0x1c00)|(length&0x03ff))
+#define MSG_PACK_PROPERTY(divided, encrypt, length) \
+	(0x00|(divided?0x2000:0x0000)|((encrypt<<10)&0x1c00)|(length&0x03ff))
 #define MSG_LENGTH(msg_property) \
 	(msg_property & 0x03ff)
 #define MSG_IS_DIVIDED(msg_property) \

@@ -18,6 +18,7 @@ void print_hex(const char* array, unsigned int size){
 	}
 	printf("\n");
 }	
+
 TEST(pack_test, escape_then_unescape){
 	MSG_BYTE data[] = {0x30, 0x7e, 0x08, 0x7d, 0x55};
 	MSG_BYTE escaped_data[] = {0x30, 0x7d, 0x02, 0x08, 0x7d, 0x01, 0x55};
@@ -37,6 +38,21 @@ TEST(pack_test, escape_then_unescape){
 	EXPECT_EQ(buf.size(), unescaped_buf.size());
 	EXPECT_EQ(0, strncmp(unescaped_buf.c_str(), buf.c_str(), buf.size()));
 }
+
+extern string header2string(const msg_header_t header);
+
+extern bool deserialize_header(string str, msg_header_t header);
+TEST(pack_test, serialize_header){
+	MSG_BCD phone_num[] = {0,0,1,2,3,4,5,6,7,8,9,0,};
+	msg_header_t header = generate_header(0x0001, MSG_PACK_PROPERTY(true, 0x07, 128), &phone_num[0], 2, generate_pack_option(2, 1));
+	string str = header2string(header);
+	EXPECT_EQ(16, str.size());
+	msg_header_t deserialized; 
+	EXPECT_EQ(true, deserialize_header(str, deserialized));
+
+	EXPECT_EQ(0, strncmp((char*)&header, (char*)&deserialized, sizeof(msg_header_t)));
+}
+
 int main(int argc, char** argv){
 	::testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();
