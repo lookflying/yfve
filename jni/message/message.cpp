@@ -2,6 +2,13 @@
 #include <cstring>
 #include <string>
 using namespace std;
+
+/*终端手机号*/
+MSG_BCD msg_g_phone_num[MSG_PHONE_NUM_LEN];
+/*消息流水号*/
+MSG_WORD msg_g_msg_seq = 0;
+
+
 static string big_endian(MSG_WORD word){
 	string str = "";
 	str += (char)HBYTE(word);
@@ -166,4 +173,14 @@ msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq){
 	pack_opt.pack_count = pack_count;
 	pack_opt.pack_seq = pack_seq;
 	return pack_opt;
+}
+
+
+bool pack_msg(MSG_WORD id, char* msg_data, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed){
+	if (MSG_MAX_PACK_SIZE == 0 || msg_len <= (unsigned int)MSG_MAX_PACK_SIZE){
+			
+	}else{
+		//TODO
+	}
+	
 }

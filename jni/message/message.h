@@ -1,6 +1,7 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 #include <stdint.h>
+#include <vector>
 typedef uint8_t MSG_BYTE;
 typedef uint16_t MSG_WORD;
 typedef uint32_t MSG_DWORD;
@@ -73,5 +74,12 @@ msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq);
 
 #define MSG_SET_WORD(word, hbyte, lbyte) \
 	((word) = (((((MSG_WORD)(hbyte))<<8)&0xff00) | (((MSG_WORD)(lbyte))&0x00ff)))
+
+#define MSG_MAX_PACK_SIZE	0 /*每个数据包中最大能够pack的内容的尺寸,以字节为单位,若为0则为无限制*/
+extern MSG_BCD msg_g_phone_num[MSG_PHONE_NUM_LEN];
+extern MSG_WORD msg_g_msg_seq;
+
+void set_global_property(MSG_BYTE *phone_num, 
+bool pack_msg(MSG_WORD id, char* msg_data, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed);
 
 #endif
