@@ -14,7 +14,7 @@ extern void escape(string str, string& escaped);
 extern  void unescape(string str, string &unescaped);
 void print_hex(const char* array, unsigned int size){
 	for (unsigned int i = 0; i < size; ++i){
-		printf("%02x ", *(array + i));
+		printf("%02x ", (unsigned char)*(array + i));
 	}
 	printf("\n");
 }	
@@ -43,15 +43,25 @@ extern string header2string(const msg_header_t header);
 
 extern bool deserialize_header(string str, msg_header_t &header);
 TEST(pack_test, serialize_header){
-	MSG_BCD phone_num[] = {0,0,1,2,3,4,5,6,7,8,9,0,};
-	msg_header_t header = generate_header(0x0001, MSG_PACK_PROPERTY(true, 0x07, 128), &phone_num[0], 2, generate_pack_option(2, 1));
+	MSG_BCD phone_num[] = {1,2,3,4,5,6,7,8,9,0,};
+	msg_header_t header = generate_header(0x0001, MSG_PACK_PROPERTY(true, 0x07, 128), &phone_num[0],10, 2, generate_pack_option(2, 1));
 	string str = header2string(header);
 	EXPECT_EQ(16, str.size());
 	msg_header_t deserialized; 
 	EXPECT_EQ(true, deserialize_header(str, deserialized));
 
 	EXPECT_EQ(0, strncmp((char*)&header, (char*)&deserialized, sizeof(msg_header_t)));
+	header = generate_header(0x01, MSG_PACK_PROPERTY(false, 0x08, 64), &phone_num[0], 10, 3, generate_pack_option(2, 1));
+	str = header2string(header);
+	EXPECT_EQ(12, str.size());
+	EXPECT_EQ(true, deserialize_header(str, deserialized));
+	EXPECT_EQ(0, strncmp((char*)&header, (char*)&deserialized, sizeof(msg_header_t) - sizeof(msg_pack_opt_t)));
+	print_hex((char*)&deserialized.phone_num[0], MSG_PHONE_NUM_LEN);
 }
+
+
+
+
 
 int main(int argc, char** argv){
 	::testing::InitGoogleTest(&argc, argv);

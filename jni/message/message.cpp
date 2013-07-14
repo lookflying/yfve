@@ -111,11 +111,13 @@ bool deserialize_header(string str, msg_header_t &header){
 			header.phone_num[i] = (MSG_BCD)str.at(4+i);
 		}	
 		MSG_SET_WORD(header.seq, (MSG_BYTE)str.at(10), (MSG_BYTE)str.at(11));
-		if (MSG_IS_DIVIDED(header.property) && str.size() >= MSG_HEADER_MAX_SIZE){
-			MSG_SET_WORD(header.pack_opt.pack_count, (MSG_BYTE)str.at(12), (MSG_BYTE)str.at(13));
-			MSG_SET_WORD(header.pack_opt.pack_seq, (MSG_BYTE)str.at(14), (MSG_BYTE)str.at(15));
-		}else{
-			return false;
+		if (MSG_IS_DIVIDED(header.property)){
+			if (str.size() >= MSG_HEADER_MAX_SIZE){
+				MSG_SET_WORD(header.pack_opt.pack_count, (MSG_BYTE)str.at(12), (MSG_BYTE)str.at(13));
+				MSG_SET_WORD(header.pack_opt.pack_seq, (MSG_BYTE)str.at(14), (MSG_BYTE)str.at(15));
+			}else{
+				return false;
+			}
 		}
 	}
 	return true;
@@ -129,11 +131,30 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message)
 	
 }
 
-msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq, msg_pack_opt_t pack_opt){
+void bytes2phone_num(MSG_BYTE *bytes, unsigned int len, MSG_BCD *phone_num){
+	unsigned int pre_zero = 0;
+	if (len < 2 * MSG_PHONE_NUM_LEN){
+		pre_zero = 2 * MSG_PHONE_NUM_LEN - len;
+	}
+	for (unsigned int i = 0; i < 2 * MSG_PHONE_NUM_LEN; ++i){
+		MSG_BYTE cur_byte, buf_bytes[2];
+		if (i < pre_zero){
+			cur_byte = 0;
+		}else{
+			cur_byte = *(bytes + (i - pre_zero));
+		}
+		buf_bytes[i & 0x0001] = cur_byte;
+		if (1 == (i & 0x0001)){
+			MSG_BYTE2BCD(buf_bytes[0], buf_bytes[1], *(phone_num + (i / 2)));
+		}
+	}
+}
+
+msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BYTE *phone_num, unsigned int len, MSG_WORD seq, msg_pack_opt_t pack_opt){
 	msg_header_t header;
 	header.id = id;
 	header.property = property;
-	memcpy(&header.phone_num[0], phone_num, MSG_PHONE_NUM_LEN);
+	bytes2phone_num(phone_num, len, &header.phone_num[0]);
 	header.seq = seq;
 	header.pack_opt = pack_opt;
 	return header;

@@ -60,9 +60,16 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
 #define MSG_IS_ENCRYPT(msg_property) \
 	(msg_property & 0x1c00)
 
-msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq, msg_pack_opt_t pack_opt);
+#define MSG_BYTE2BCD(byte0, byte1, bcd) \
+	((bcd) = ((MSG_BCD)((byte0) & 0x0f) | (MSG_BCD)(((byte1) & 0x0f)<<4)))
+
+void bytes2phone_num(MSG_BYTE *bytes, unsigned int len, MSG_BCD *phone_num);
+
+msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BYTE *phone_num, unsigned int len, MSG_WORD seq, msg_pack_opt_t pack_opt);
 
 msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq); 
+
+
 
 #define MSG_SET_WORD(word, hbyte, lbyte) \
 	((word) = (((((MSG_WORD)(hbyte))<<8)&0xff00) | (((MSG_WORD)(lbyte))&0x00ff)))
