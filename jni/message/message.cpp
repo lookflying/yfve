@@ -120,21 +120,21 @@ bool deserialize_header(string &str, msg_header_t &header){
 			header.phone_num[i] = (MSG_BCD)str.at(4+i);
 		}	
 		MSG_SET_WORD(header.seq, (MSG_BYTE)str.at(10), (MSG_BYTE)str.at(11));
+		str.erase(0, 12);
 		if (MSG_IS_DIVIDED(header.property)){
-			if (str.size() >= MSG_HEADER_MAX_SIZE){
-				MSG_SET_WORD(header.pack_opt.pack_count, (MSG_BYTE)str.at(12), (MSG_BYTE)str.at(13));
-				MSG_SET_WORD(header.pack_opt.pack_seq, (MSG_BYTE)str.at(14), (MSG_BYTE)str.at(15));
+			if (str.size() >= MSG_HEADER_MAX_SIZE - MSG_HEADER_MIN_SIZE){
+				MSG_SET_WORD(header.pack_opt.pack_count, (MSG_BYTE)str.at(0), (MSG_BYTE)str.at(1));
+				MSG_SET_WORD(header.pack_opt.pack_seq, (MSG_BYTE)str.at(2), (MSG_BYTE)str.at(3));
+				str.erase(0, 4);
 			}else{
 				return false;
 			}
-		}else{
-			
 		}
 	}
 	return true;
 }
-bool deserialize(msg_serialized_message_t serialized, msg_message_t &message)
-{
+
+bool deserialize(msg_serialized_message_t serialized, msg_message_t &message){
 	string deserialize_buf = "";
 	string unescaped_deserialize_buf = "";
 	if ((char)MSG_FLAG == (char)(*serialized.data) && (char)MSG_FLAG == (char)(*(serialized.data + serialized.length - 1))){
