@@ -9,7 +9,7 @@ TEST(macro_test, high_low_byte){
 	MSG_WORD word = 0x1234;
 	EXPECT_EQ(0x12, HBYTE(word));
 	EXPECT_EQ(0x34, LBYTE(word));
-	
+
 }
 
 extern void escape(string str, string& escaped);
@@ -41,6 +41,28 @@ TEST(pack_test, escape_then_unescape){
 	EXPECT_EQ(0, strncmp(unescaped_buf.c_str(), buf.c_str(), buf.size()));
 }
 
+TEST(pack_test, random_escape){
+	srand(time(NULL));
+	unsigned int size = rand() % (rand() % 100000 + 2000000);
+	char * array = new (nothrow) char[size];
+	ASSERT_NE(array, (char*)NULL);
+	for (unsigned int i = 0; i < size; ++i){
+		char c = (char)rand() % 256;
+		array[i] = c;
+	}
+	string buf = "";
+	buf.append(array, size);
+	string escaped_buf = "";
+	string unescaped_buf = "";
+	string right = "";
+	escape(buf, escaped_buf);
+	//print_hex(buf.c_str(), buf.size());
+	//print_hex(escaped_buf.c_str(), escaped_buf.size());
+	unescape(escaped_buf, unescaped_buf);
+	EXPECT_EQ(buf.size(), unescaped_buf.size());
+	EXPECT_EQ(0, strncmp(unescaped_buf.c_str(), buf.c_str(), buf.size()));
+}
+
 extern string header2string(const msg_header_t header);
 
 extern bool deserialize_header(string &str, msg_header_t &header);
@@ -66,9 +88,19 @@ TEST(pack_test, serialize_header){
 	print_hex((char*)&deserialized.phone_num[0], MSG_PHONE_NUM_LEN);
 }
 
+TEST(pack_test, small_sample){
+	char data[] = {0x30, 0x7e, 0x08, 0x7d, 0x55};
+	vector<msg_serialized_message_t> sample;
+	char* unpacked;
+	unsigned int len;
+	print_hex(data, sizeof(data));
+	print_hex(unpacked, len);
+	EXPECT_TRUE(pack_msg(0x0001, &data[0], 0x0000, sizeof(data), sample));
+	EXPECT_TRUE(unpack_msg(sample[0], &unpacked, len));
+	EXPECT_EQ(0, strncmp(&data[0], unpacked, len));
+}
 
-
-TEST(pack_test, pack_message){
+TEST(pack_test, pack_unpack_message){
 	srand(time(NULL));
 	unsigned int small_size = (unsigned int)rand() % (unsigned int)0x3ff;
 	unsigned int large_size = (unsigned int)rand() % (0x3ff * 100)+ (unsigned int)0x400;
@@ -82,8 +114,18 @@ TEST(pack_test, pack_message){
 	EXPECT_TRUE(pack_msg(0x0002, large_msg, 0x0007, large_size, large));
 	EXPECT_EQ((small_size + 0x3ff - 1) / 0x3ff, small.size());
 	EXPECT_EQ((large_size + 0x3ff - 1) / 0x3ff, large.size());
-
-
+	char * unpacked;
+	unsigned int len;
+	EXPECT_TRUE(unpack_msg(small[0], &unpacked, len));
+	for (vector<msg_serialized_message_t>::reverse_iterator it = large.rbegin();
+			it != large.rend();
+			++it){
+		if (unpack_msg(*it, &unpacked, len)){
+			break;
+		}
+	}
+	EXPECT_EQ(large_size, len);
+	EXPECT_EQ(0, strncmp(large_msg, unpacked, large_size));
 }
 
 

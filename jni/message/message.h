@@ -55,7 +55,7 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
 #define MSG_PACK_PROPERTY(divided, encrypt, length) \
 	((MSG_WORD)(0x00|(divided?0x2000:0x0000)|((encrypt<<10)&0x1c00)|(length&0x03ff)))
 #define MSG_LENGTH(msg_property) \
-	(msg_property & 0x03ff)
+	((unsigned int)(msg_property & 0x03ff))
 #define MSG_IS_DIVIDED(msg_property) \
 	(msg_property & 0x2000)
 #define MSG_IS_ENCRYPT(msg_property) \
@@ -63,6 +63,8 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
 
 #define MSG_BYTE2BCD(byte0, byte1, bcd) \
 	((bcd) = ((MSG_BCD)((byte0) & 0x0f) | (MSG_BCD)(((byte1) & 0x0f)<<4)))
+
+
 
 void bytes2phone_num(MSG_BYTE *bytes, unsigned int len, MSG_BCD *phone_num);
 
@@ -87,4 +89,6 @@ extern MSG_WORD msg_g_msg_seq;
 #define set_global_max_pack_size(size) \
 	 (msg_g_max_pack_size = (unsigned int)(size))
 bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed);
+
+bool unpack_msg(msg_serialized_message_t packed, char** msg_data, unsigned int &len);
 #endif
