@@ -43,7 +43,7 @@ TEST(pack_test, escape_then_unescape){
 
 extern string header2string(const msg_header_t header);
 
-extern bool deserialize_header(string str, msg_header_t &header);
+extern bool deserialize_header(string &str, msg_header_t &header);
 TEST(pack_test, serialize_header){
 	MSG_BYTE phone_num[] = {1,2,3,4,5,6,7,8,9,0,};
 	MSG_BCD real_phone_num[MSG_PHONE_NUM_LEN];

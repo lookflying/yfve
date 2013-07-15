@@ -110,7 +110,7 @@ void unescape(string str, string &unescaped){
 }
 
 
-bool deserialize_header(string str, msg_header_t &header){
+bool deserialize_header(string &str, msg_header_t &header){
 	if (str.size() < MSG_HEADER_MIN_SIZE){
 		return false;
 	}else{
@@ -127,6 +127,8 @@ bool deserialize_header(string str, msg_header_t &header){
 			}else{
 				return false;
 			}
+		}else{
+			
 		}
 	}
 	return true;
@@ -135,9 +137,19 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message)
 {
 	string deserialize_buf = "";
 	string unescaped_deserialize_buf = "";
-	deserialize_buf.append((char*)serialized.data, serialized.length);
-	unescape(deserialize_buf, unescaped_deserialize_buf);
-	
+	if ((char)MSG_FLAG == (char)(*serialized.data) && (char)MSG_FLAG == (char)(*(serialized.data + serialized.length - 1))){
+		deserialize_buf.append((char*)(serialized.data + 1), serialized.length - 2);
+		unescape(deserialize_buf, unescaped_deserialize_buf);
+		msg_header_t temp_header;
+		if (deserialize_header(unescaped_deserialize_buf, temp_header)){
+			memcpy(&message.header, &temp_header, sizeof(msg_header_t));
+			//TODO
+		}else{
+			return false;
+		}
+	}else{
+		return false;
+	}
 }
 
 void bytes2phone_num(MSG_BYTE *bytes, unsigned int len, MSG_BCD *phone_num){
@@ -238,3 +250,5 @@ bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int m
 		return true;
 	}	
 }
+
+
