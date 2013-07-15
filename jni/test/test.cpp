@@ -2,6 +2,8 @@
 #include "../message/message.h"
 #include <string>
 #include <cstring>
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 TEST(macro_test, high_low_byte){
 	MSG_WORD word = 0x1234;
@@ -43,24 +45,46 @@ extern string header2string(const msg_header_t header);
 
 extern bool deserialize_header(string str, msg_header_t &header);
 TEST(pack_test, serialize_header){
-	MSG_BCD phone_num[] = {1,2,3,4,5,6,7,8,9,0,};
-	msg_header_t header = generate_header(0x0001, MSG_PACK_PROPERTY(true, 0x07, 128), &phone_num[0],10, 2, generate_pack_option(2, 1));
+	MSG_BYTE phone_num[] = {1,2,3,4,5,6,7,8,9,0,};
+	MSG_BCD real_phone_num[MSG_PHONE_NUM_LEN];
+	bytes2phone_num(&phone_num[0], 10, &real_phone_num[0]);
+
+	msg_header_t header = generate_header(0x0001, MSG_PACK_PROPERTY(true, 0x07, 128), &real_phone_num[0], 2, generate_pack_option(2, 1));
 	string str = header2string(header);
 	EXPECT_EQ(16, str.size());
 	msg_header_t deserialized; 
 	EXPECT_EQ(true, deserialize_header(str, deserialized));
 
 	EXPECT_EQ(0, strncmp((char*)&header, (char*)&deserialized, sizeof(msg_header_t)));
-	header = generate_header(0x01, MSG_PACK_PROPERTY(false, 0x08, 64), &phone_num[0], 10, 3, generate_pack_option(2, 1));
+	header = generate_header(0x01, MSG_PACK_PROPERTY(false, 0x08, 64), &real_phone_num[0], 3, generate_pack_option(2, 1));
 	str = header2string(header);
 	EXPECT_EQ(12, str.size());
 	EXPECT_EQ(true, deserialize_header(str, deserialized));
 	EXPECT_EQ(0, strncmp((char*)&header, (char*)&deserialized, sizeof(msg_header_t) - sizeof(msg_pack_opt_t)));
+	print_hex((char*)&real_phone_num[0], MSG_PHONE_NUM_LEN);
+	print_hex((char*)&header.phone_num[0], MSG_PHONE_NUM_LEN);
 	print_hex((char*)&deserialized.phone_num[0], MSG_PHONE_NUM_LEN);
 }
 
 
 
+TEST(pack_test, pack_message){
+	srand(time(NULL));
+	unsigned int small_size = (unsigned int)rand() % (unsigned int)0x3ff;
+	unsigned int large_size = (unsigned int)rand() % (0x3ff * 100)+ (unsigned int)0x400;
+	char* small_msg = new (nothrow) char[small_size];
+	ASSERT_TRUE(small_msg != NULL);
+	char* large_msg = new (nothrow) char[large_size];
+	ASSERT_TRUE(large_msg != NULL);
+	vector<msg_serialized_message_t> small, large;
+	set_global_max_pack_size(0);
+	EXPECT_TRUE(pack_msg(0x0001, small_msg, 0x0000, small_size, small));
+	EXPECT_TRUE(pack_msg(0x0002, large_msg, 0x0007, large_size, large));
+	EXPECT_EQ((small_size + 0x3ff - 1) / 0x3ff, small.size());
+	EXPECT_EQ((large_size + 0x3ff - 1) / 0x3ff, large.size());
+
+
+}
 
 
 int main(int argc, char** argv){

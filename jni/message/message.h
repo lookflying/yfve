@@ -53,7 +53,7 @@ bool serialize(msg_message_t message, msg_serialized_message_t &serialized);
 bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
 
 #define MSG_PACK_PROPERTY(divided, encrypt, length) \
-	(0x00|(divided?0x2000:0x0000)|((encrypt<<10)&0x1c00)|(length&0x03ff))
+	((MSG_WORD)(0x00|(divided?0x2000:0x0000)|((encrypt<<10)&0x1c00)|(length&0x03ff)))
 #define MSG_LENGTH(msg_property) \
 	(msg_property & 0x03ff)
 #define MSG_IS_DIVIDED(msg_property) \
@@ -66,7 +66,8 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
 
 void bytes2phone_num(MSG_BYTE *bytes, unsigned int len, MSG_BCD *phone_num);
 
-msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BYTE *phone_num, unsigned int len, MSG_WORD seq, msg_pack_opt_t pack_opt);
+msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq, msg_pack_opt_t pack_opt);
+msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq);
 
 msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq); 
 
@@ -75,11 +76,16 @@ msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq);
 #define MSG_SET_WORD(word, hbyte, lbyte) \
 	((word) = (((((MSG_WORD)(hbyte))<<8)&0xff00) | (((MSG_WORD)(lbyte))&0x00ff)))
 
-#define MSG_MAX_PACK_SIZE	0 /*每个数据包中最大能够pack的内容的尺寸,以字节为单位,若为0则为无限制*/
+extern unsigned int msg_g_max_pack_size;
+#define MSG_MAX_PACK_SIZE	(msg_g_max_pack_size) /*每个数据包中最大能够pack的内容的尺寸,以字节为单位,若为0则为无限制*/
+#define MSG_PACK_SIZE_LIMIT	(0x03ff) /*包头可描述最大包尺寸*/
 extern MSG_BCD msg_g_phone_num[MSG_PHONE_NUM_LEN];
 extern MSG_WORD msg_g_msg_seq;
 
-void set_global_property(MSG_BYTE *phone_num, 
-bool pack_msg(MSG_WORD id, char* msg_data, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed);
+#define set_global_phone_num(phone_num,len) \
+	(bytes2phone_num((phone_num), (len), &msg_g_phone_num[0]))
+#define set_global_max_pack_size(size) \
+	 (msg_g_max_pack_size = (unsigned int)(size))
+bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed);
 
 #endif

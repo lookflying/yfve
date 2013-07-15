@@ -7,7 +7,8 @@ using namespace std;
 MSG_BCD msg_g_phone_num[MSG_PHONE_NUM_LEN];
 /*消息流水号*/
 MSG_WORD msg_g_msg_seq = 0;
-
+/*单包最大数据尺寸*/
+unsigned int msg_g_max_pack_size = 0;
 
 static string big_endian(MSG_WORD word){
 	string str = "";
@@ -55,6 +56,7 @@ void escape(string str, string &escaped){
 	}
 }
 
+/*根据header和body内容生成校验码, 并序列化*/
 bool serialize(msg_message_t message, msg_serialized_message_t &serialized){
 	string serialize_buf = "";
 	string escaped_serialize_buf = "";
@@ -157,13 +159,23 @@ void bytes2phone_num(MSG_BYTE *bytes, unsigned int len, MSG_BCD *phone_num){
 	}
 }
 
-msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BYTE *phone_num, unsigned int len, MSG_WORD seq, msg_pack_opt_t pack_opt){
+msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq, msg_pack_opt_t pack_opt){
 	msg_header_t header;
 	header.id = id;
 	header.property = property;
-	bytes2phone_num(phone_num, len, &header.phone_num[0]);
+	memcpy(&header.phone_num[0], &phone_num[0], MSG_PHONE_NUM_LEN);
 	header.seq = seq;
 	header.pack_opt = pack_opt;
+	return header;
+}
+
+msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq){
+	msg_header_t header;
+	header.id = id;
+	header.property = property;
+	memcpy(&header.phone_num[0], &phone_num[0], MSG_PHONE_NUM_LEN);
+	header.seq = seq;
+	memset(&header.pack_opt, 0, sizeof(msg_pack_opt_t));
 	return header;
 }
 
@@ -176,11 +188,53 @@ msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq){
 }
 
 
-bool pack_msg(MSG_WORD id, char* msg_data, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed){
-	if (MSG_MAX_PACK_SIZE == 0 || msg_len <= (unsigned int)MSG_MAX_PACK_SIZE){
-			
+bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed){
+	packed.resize(0);
+	if ((MSG_MAX_PACK_SIZE == 0 || msg_len <= (unsigned int)MSG_MAX_PACK_SIZE) && msg_len <= (unsigned int)MSG_PACK_SIZE_LIMIT){
+		MSG_WORD property = MSG_PACK_PROPERTY(false, encrypt, msg_len);
+		msg_message_t temp_msg;
+		msg_serialized_message_t serialized_msg;
+		temp_msg.header = generate_header(id, property, msg_g_phone_num, msg_g_msg_seq++); 
+		temp_msg.body.content = (MSG_BYTE*) msg_data;
+		temp_msg.body.length = msg_len;
+		if (serialize(temp_msg, serialized_msg)){
+			packed.push_back(serialized_msg);
+			return true;
+		}else{
+			return false;
+		}
 	}else{
-		//TODO
-	}
-	
+		unsigned int remain = msg_len;
+		unsigned int divided_size = 0;
+		if (MSG_MAX_PACK_SIZE == 0){
+			divided_size = (unsigned int)MSG_PACK_SIZE_LIMIT;
+		}else{
+			divided_size = ((unsigned int)MSG_MAX_PACK_SIZE < (unsigned int)MSG_PACK_SIZE_LIMIT)? (unsigned int)MSG_MAX_PACK_SIZE:(unsigned int)MSG_PACK_SIZE_LIMIT;
+		}
+		unsigned int seq = 0;
+		unsigned int count = (remain + divided_size - 1) / divided_size;
+
+		while (remain > 0){
+			MSG_WORD cur_size;
+			if (remain > divided_size){
+				cur_size = divided_size;
+				remain -= divided_size;
+			}else{
+				cur_size = remain;
+				remain = 0;
+			}
+			MSG_WORD property = MSG_PACK_PROPERTY(true, encrypt, cur_size);
+			msg_message_t temp_msg;
+			msg_serialized_message_t serialized_msg;
+			temp_msg.header = generate_header(id, property, msg_g_phone_num, msg_g_msg_seq++, generate_pack_option(count, seq + 1));
+			temp_msg.body.content = (MSG_BYTE*) (msg_data + (seq * divided_size));
+			temp_msg.body.length = cur_size;
+			if (serialize(temp_msg, serialized_msg)){
+				packed.push_back(serialized_msg);
+			}else{
+				return false;
+			}
+		}
+		return true;
+	}	
 }
