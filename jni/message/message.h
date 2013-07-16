@@ -63,36 +63,96 @@ typedef struct msg_serialized_message{
 	((bcd) = ((MSG_BCD)((byte0) & 0x0f) | (MSG_BCD)(((byte1) & 0x0f)<<4)))
 
 
-
+/*
+ * 辅助函数，将字节流转换为MSG_BCD数组
+ */
 void bytes2phone_num(MSG_BYTE *bytes, unsigned int len, MSG_BCD *phone_num);
 
+/*
+ *辅助函数，生成分包的包头
+ */
 msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq, msg_pack_opt_t pack_opt);
+
+/*
+ *辅助函数，生成包头
+ */
 msg_header_t generate_header(MSG_WORD id, MSG_WORD property, MSG_BCD *phone_num, MSG_WORD seq);
 
+/*
+ *辅助函数，生成封装项字段
+ */
 msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq); 
 
 
-
+/*
+ *宏，设置WORD的高低位字节
+ */
 #define MSG_SET_WORD(word, hbyte, lbyte) \
 	((word) = (((((MSG_WORD)(hbyte))<<8)&0xff00) | (((MSG_WORD)(lbyte))&0x00ff)))
 
+/*
+ *单包最大消息尺寸
+ */
 extern unsigned int msg_g_max_pack_size;
 #define MSG_MAX_PACK_SIZE	(msg_g_max_pack_size) /*每个数据包中最大能够pack的内容的尺寸,以字节为单位,若为0则为无限制*/
 #define MSG_PACK_SIZE_LIMIT	(0x03ff) /*包头可描述最大包尺寸*/
+
+/*全局sim卡电话号码*/
 extern MSG_BCD msg_g_phone_num[MSG_PHONE_NUM_LEN];
+/*全局消息流水号，在pack_msg中维护*/
 extern MSG_WORD msg_g_msg_seq;
 
+/*
+ * 获取消息的流水号
+ */
 #define MSG_SEQ(message) \
 				(message.header.seq)
-
+/*
+ *序列化消息（一般无需额外调用，pack_msg会自行序列化）
+ *message 待序列化的消息
+ *serialized 序列化后的消息
+ *返回值，序列化成功返回true，失败返回false
+ */
 bool serialize(msg_message_t message, msg_serialized_message_t &serialized);
+
+/*
+ *反序列化消息（主要对外接口）
+ *serialized 待反序列化的消息
+ *message 序列化后的消息
+ *返回值，反序列化成功返回true，失败返回false
+ */
 bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
 
+/*
+ *设置全局sim卡电话号码，接受char数组，每个字节表示一位号码，按字节序，长度不满12位，自动在前面补零，超过12位，只取前12位
+ */
 #define set_global_phone_num(phone_num,len) \
 	(bytes2phone_num((phone_num), (len), &msg_g_phone_num[0]))
+/*
+ *设置全局单包最大尺寸，以字节位单位
+ */
 #define set_global_max_pack_size(size) \
 	 (msg_g_max_pack_size = (unsigned int)(size))
+/*
+ *封装消息，自动分包（主要对外接口）
+ *id 消息ID
+ *msg_data 消息的内容
+ *encrypt 消息的加密类型（取低3位，格式定义如消息体属性格式结构的10到12位
+ *msg_len 消息的长度
+ *packed 封装后的消息
+ *packed_seq 封装后的消息对应的流水号
+ *返回值，成功封装返回true，失败返回false
+ * */
 bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed, std::vector<MSG_WORD> &packed_seq);
 
+/*
+ *解包消息（主要对外接口）
+ *利用全局缓存，每次接受一个反序列化后的消息，若与缓存中的消息组合能够成功解包，则返回true，并将消息内容拷贝至msg_data（动态申请内存）
+ *msg 当前输入的消息
+ *msg_id 解包成功后，获得的消息的消息ID
+ *msg_data 指向消息数据的指针
+ *len 消息的长度
+ *返回值，成功解包返回true，尚未能够成功解包或者解包失败返回false
+ */
 bool unpack_msg(msg_message_t msg, MSG_WORD &msg_id, char** msg_data, unsigned int &len);
 #endif
