@@ -93,10 +93,12 @@ TEST(pack_test, small_sample){
 	vector<msg_serialized_message_t> sample;
 	char* unpacked;
 	unsigned int len;
+	MSG_WORD id;
 	print_hex(data, sizeof(data));
-	print_hex(unpacked, len);
 	EXPECT_TRUE(pack_msg(0x0001, &data[0], 0x0000, sizeof(data), sample));
-	EXPECT_TRUE(unpack_msg(sample[0], &unpacked, len));
+	EXPECT_TRUE(unpack_msg(sample[0], id, &unpacked, len));
+	EXPECT_EQ(sizeof(data), len);
+	print_hex(unpacked, sizeof(data));
 	EXPECT_EQ(0, strncmp(&data[0], unpacked, len));
 }
 
@@ -116,11 +118,12 @@ TEST(pack_test, pack_unpack_message){
 	EXPECT_EQ((large_size + 0x3ff - 1) / 0x3ff, large.size());
 	char * unpacked;
 	unsigned int len;
-	EXPECT_TRUE(unpack_msg(small[0], &unpacked, len));
+	MSG_WORD id;
+	EXPECT_TRUE(unpack_msg(small[0], id, &unpacked, len));
 	for (vector<msg_serialized_message_t>::reverse_iterator it = large.rbegin();
 			it != large.rend();
 			++it){
-		if (unpack_msg(*it, &unpacked, len)){
+		if (unpack_msg(*it, id, &unpacked, len)){
 			break;
 		}
 	}

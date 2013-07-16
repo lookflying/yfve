@@ -2,6 +2,7 @@
 #include <cstring>
 #include <string>
 #include <map>
+#include <cstdio>
 using namespace std;
 
 /*终端手机号*/
@@ -14,6 +15,7 @@ unsigned int msg_g_max_pack_size = 0;
 map<MSG_WORD, msg_message_t> msg_g_unpack_cache;
 MSG_WORD msg_g_unpack_count = 0;
 unsigned int msg_g_unpack_size = 0;
+MSG_WORD msg_g_id = 0;
 
 void clear_msg(msg_message_t &msg){
 	if (msg.body.length > 0){
@@ -162,7 +164,6 @@ bool deserialize_header(string &str, msg_header_t &header){
 	}
 	return true;
 }
-#include <cstdio>
 bool deserialize(msg_serialized_message_t serialized, msg_message_t &message){
 	string deserialize_buf = "";
 	string unescaped_deserialize_buf = "";
@@ -170,6 +171,9 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message){
 		deserialize_buf.append((char*)(serialized.data + 1), serialized.length - 2);
 	//TODO
 		unescape(deserialize_buf, unescaped_deserialize_buf);
+		MSG_BYTE cal_chksum = checksum(unescaped_deserialize_buf);
+		if (cal_chksum != 0x00)
+						return false;
 		msg_header_t temp_header;
 		if (deserialize_header(unescaped_deserialize_buf, temp_header)){
 			memcpy(&message.header, &temp_header, sizeof(msg_header_t));
@@ -177,25 +181,13 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message){
 			if(unescaped_deserialize_buf.size() != msg_len + 1){/*校验码占一个字节*/
 				return false;
 			}else{
-				MSG_BYTE chksum = unescaped_deserialize_buf.at(msg_len);/*最后一字节是校验码*/
-				MSG_BYTE cal_chksum = checksum(unescaped_deserialize_buf);
-	
-				for(unsigned int i = 0; i < unescaped_deserialize_buf.size(); ++i)
-					printf("%02x ", (unsigned char)unescaped_deserialize_buf.at(i));
-				printf("\n");
-
-				cal_chksum ^= chksum;
-				if (chksum != cal_chksum){
+				message.body.content = new (nothrow) MSG_BYTE[msg_len];
+				if ( message.body.content == NULL){
 					return false;
 				}else{
-					message.body.content = new (nothrow) MSG_BYTE[msg_len];
-					if ( message.body.content == NULL){
-						return false;
-					}else{
-						memcpy(&message.body.content[0], unescaped_deserialize_buf.c_str(), msg_len);
-						message.body.length = msg_len;
-						return true;
-					}
+					memcpy(&message.body.content[0], unescaped_deserialize_buf.c_str(), msg_len);
+					message.body.length = msg_len;
+					return true;
 				}
 			}
 		}else{
@@ -300,19 +292,20 @@ bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int m
 			}else{
 				return false;
 			}
+			++seq;
 		}
 		return true;
 	}	
 }
 
-bool unpack_msg(msg_serialized_message_t packed, char** msg_data, unsigned int &len){
+bool unpack_msg(msg_serialized_message_t packed, MSG_WORD &id, char** msg_data, unsigned int &msg_len){
 	msg_message_t msg;
-	len = 0;
+	msg_len = 0;
 	if (deserialize(packed, msg)){
 		if (MSG_IS_DIVIDED(msg.header.property)){
-			if (msg_g_unpack_count == 0 
-					|| msg_g_unpack_count != msg.header.pack_opt.pack_count
-					|| msg_g_unpack_cache.find(msg.header.pack_opt.pack_seq) != msg_g_unpack_cache.end()){
+			if ((msg_g_unpack_count == 0)
+					|| (msg_g_unpack_count != msg.header.pack_opt.pack_count)
+					|| (msg_g_unpack_cache.find(msg.header.pack_opt.pack_seq) != msg_g_unpack_cache.end())){
 				clear_upack_cache();
 				msg_g_unpack_count = msg.header.pack_opt.pack_count;
 			}
@@ -328,15 +321,16 @@ bool unpack_msg(msg_serialized_message_t packed, char** msg_data, unsigned int &
 					memcpy(ptr, msg_g_unpack_cache[i].body.content, len);
 					ptr += len;
 				}
+				msg_len = msg_g_unpack_size;
 				return true;
 			}
 		}else{
 			clear_upack_cache();
-			len = MSG_LENGTH(msg.header.property);
-			*msg_data = new (nothrow) char[len];
+			msg_len = MSG_LENGTH(msg.header.property);
+			*msg_data = new (nothrow) char[msg_len];
 			if (*msg_data == NULL)
 				return false;
-			memcpy(msg.body.content, *msg_data, len);
+			memcpy(*msg_data, msg.body.content, msg_len);
 			return true;
 		}
 	}
