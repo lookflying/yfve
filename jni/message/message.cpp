@@ -177,7 +177,6 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message){
 	string unescaped_deserialize_buf = "";
 	if ((char)MSG_FLAG == (char)(*serialized.data) && (char)MSG_FLAG == (char)(*(serialized.data + serialized.length - 1))){
 		deserialize_buf.append((char*)(serialized.data + 1), serialized.length - 2);
-	//TODO
 		unescape(deserialize_buf, unescaped_deserialize_buf);
 		MSG_BYTE cal_chksum = checksum(unescaped_deserialize_buf);
 		if (cal_chksum != 0x00)
