@@ -310,41 +310,41 @@ bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int m
 
 bool unpack_msg(msg_message_t msg, MSG_WORD &msg_id, char** msg_data, unsigned int &msg_len){
 	msg_len = 0;
-		if (MSG_IS_DIVIDED(msg.header.property)){
-			if (msg_g_unpack_count == 0
-					|| msg_g_unpack_count != msg.header.pack_opt.pack_count
-					|| msg_g_id == 0
-					|| msg_g_id != msg.header.id
-					|| msg_g_unpack_cache.find(msg.header.pack_opt.pack_seq) != msg_g_unpack_cache.end()){
-				clear_upack_cache();
-				msg_g_id = msg.header.id;
-				msg_g_unpack_count = msg.header.pack_opt.pack_count;
-			}
-			msg_g_unpack_cache[msg.header.pack_opt.pack_seq] = msg;
-			msg_g_unpack_size += MSG_LENGTH(msg.header.property);
-			if (msg_g_unpack_cache.size() == msg_g_unpack_count){
-				*msg_data = new (nothrow) char[msg_g_unpack_size];
-				if (msg_data == NULL)
-					return false;
-				char* ptr = *msg_data;
-				for (MSG_WORD i = 0; i < msg_g_unpack_count; ++i){
-					unsigned int len = MSG_LENGTH(msg_g_unpack_cache[i].header.property);
-					memcpy(ptr, msg_g_unpack_cache[i].body.content, len);
-					ptr += len;
-				}
-				msg_len = msg_g_unpack_size;
-				msg_id = msg_g_id;
-				return true;
-			}
-		}else{
+	if (MSG_IS_DIVIDED(msg.header.property)){
+		if (msg_g_unpack_count == 0
+				|| msg_g_unpack_count != msg.header.pack_opt.pack_count
+				|| msg_g_id == 0
+				|| msg_g_id != msg.header.id
+				|| msg_g_unpack_cache.find(msg.header.pack_opt.pack_seq) != msg_g_unpack_cache.end()){
 			clear_upack_cache();
-			msg_len = MSG_LENGTH(msg.header.property);
-			msg_id = msg.header.id;
-			*msg_data = new (nothrow) char[msg_len];
-			if (*msg_data == NULL)
+			msg_g_id = msg.header.id;
+			msg_g_unpack_count = msg.header.pack_opt.pack_count;
+		}
+		msg_g_unpack_cache[msg.header.pack_opt.pack_seq] = msg;
+		msg_g_unpack_size += MSG_LENGTH(msg.header.property);
+		if (msg_g_unpack_cache.size() == msg_g_unpack_count){
+			*msg_data = new (nothrow) char[msg_g_unpack_size];
+			if (msg_data == NULL)
 				return false;
-			memcpy(*msg_data, msg.body.content, msg_len);
+			char* ptr = *msg_data;
+			for (MSG_WORD i = 0; i < msg_g_unpack_count; ++i){
+				unsigned int len = MSG_LENGTH(msg_g_unpack_cache[i].header.property);
+				memcpy(ptr, msg_g_unpack_cache[i].body.content, len);
+				ptr += len;
+			}
+			msg_len = msg_g_unpack_size;
+			msg_id = msg_g_id;
 			return true;
 		}
+	}else{
+		clear_upack_cache();
+		msg_len = MSG_LENGTH(msg.header.property);
+		msg_id = msg.header.id;
+		*msg_data = new (nothrow) char[msg_len];
+		if (*msg_data == NULL)
+			return false;
+		memcpy(*msg_data, msg.body.content, msg_len);
+		return true;
+	}
 	return false;
 }
