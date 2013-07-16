@@ -10,7 +10,7 @@ public class YzJni {
 	 * @param person 用户真实名称 （调用后取第一个下标：person[0]）
 	 * @return 0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
 	 */
-	public native int yz_2_userlogin(String simcardnum, String username,
+	public static native int yz_2_userlogin(String simcardnum, String username,
 			String password, String[] person);
 	
 	/**
@@ -20,7 +20,7 @@ public class YzJni {
 	 * @param username 工号
 	 * @return 0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
 	 */
-	public native int yz_2_userlogout(String simcardnum, String username);
+	public static native int yz_2_userlogout(String simcardnum, String username);
 	
 	/**
 	 * GPS上传
@@ -29,7 +29,7 @@ public class YzJni {
 	 * @param currentlocation 当前的位置信息
 	 * @return 0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
 	 */
-	public native int yz_3_gpsupload(String simcardnum, LocationSturt_CVS currentlocation);
+	public static native int yz_3_gpsupload(String simcardnum, LocationSturt_CVS currentlocation);
 	
 	/**
 	 * 车辆状态上传
@@ -38,7 +38,7 @@ public class YzJni {
 	 * @param vehiclestatus 车辆状态， 0为空闲中，1为工作中，2为保养中
 	 * @return 0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误则返回最新的一个错误值
 	 */
-	public native int yz_2_sendvehiclestatus(String simcardnum, int vehiclestatus);
+	public static native int yz_2_sendvehiclestatus(String simcardnum, int vehiclestatus);
 	
 	/**
 	 * 根据经纬度获取天气预报
@@ -50,14 +50,14 @@ public class YzJni {
 	 * @param weatherStruct	
 	 * @return 0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
 	 */
-	public native int yz_3_getweather(String simcardnum, double longtitude, double latitude, int PredictDays, WeatherSturt_DSP weatherStruct);
+	public static native int yz_3_getweather(String simcardnum, double longtitude, double latitude, int PredictDays, WeatherSturt_DSP weatherStruct);
 	
 	/**
 	 * 服务器主推天气信息
 	 * 函数类型：异步函数
 	 * @param weatherSturt
 	 */
-	public native void yz_3_weathercallback(WeatherSturt_DSP weatherSturt);
+	public static native void yz_3_weathercallback(WeatherSturt_DSP weatherSturt);
 	
 	/**
 	 * 根据城市代码获取天气预报
@@ -68,7 +68,7 @@ public class YzJni {
 	 * @param weatherinfo
 	 * @return 0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
 	 */
-	public native int yz_3_getweather(String simcardnum, String citycode, int PredictDays, WeatherSturt_DSP weatherinfo);
+	public static native int yz_3_getweather(String simcardnum, String citycode, int PredictDays, WeatherSturt_DSP weatherinfo);
 	
 	/**
 	 * 远程目的地设置
@@ -77,7 +77,7 @@ public class YzJni {
 	 * @param poilist poi信息列表 
 	 * @param result 获取结果，0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
 	 */
-	public native void yz_3_remotedescallback(int poinum, List<POIStruct_DSP> poilist, int result);
+	public static native void yz_3_remotedescallback(int poinum, List<POIStruct_DSP> poilist, int result);
 	
 	/**
 	 * 远程目的地设置
@@ -87,14 +87,14 @@ public class YzJni {
 	 * @param megId 消息编号
 	 * @return 获取结果，0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
 	 */
-	public native int yz_3_gettmc(String termialId, String cityCode, int megId);
+	public static native int yz_3_gettmc(String termialId, String cityCode, int megId);
 	
 	/**
 	 * 获取事实交通信息
 	 * 函数类型：回调函数
 	 * @param tmcSturt
 	 */
-	public native void yz_3_TMCcallback(TMCStruct_DSP tmcSturt);
+	public static native void yz_3_TMCcallback(TMCStruct_DSP tmcSturt);
 	
 	/**
 	 * 车况信息上传
@@ -103,7 +103,7 @@ public class YzJni {
 	 * @param vehicledata	车辆信息
 	 * @return 获取结果，0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
 	 */
-	public native int yz_3_sendvehicledata(String simcardnum, VehicleDataStruct_CVS vehicledata);
+	public static native int yz_3_sendvehicledata(String simcardnum, VehicleDataStruct_CVS vehicledata);
 	
 	
 	/**
@@ -113,7 +113,7 @@ public class YzJni {
 	 * @param cvsIp	消息服务器IP
 	 * @param cvsPort 消息服务器端口	9001
 	 */
-	public native void yz_2_init(String terminalID, String cvsIp, int cvsPort);
+	public static native void yz_2_init(String terminalID, String cvsIp, int cvsPort);
 	
 	/**
 	 * 初始化派发服务器必要的服务连接
@@ -125,17 +125,17 @@ public class YzJni {
 	 * @param mediaFilePath 文件存储地址
 	 * @param vehicleTransitListen 派发服务监听
 	 */
-	public native void yz_2_init(String terminalID, String cvsIp, int mediaPort, String wsIp, int wsPort,  String mediaFilePath, VehicleTransitListen_DSP vehicleTransitListen);
+	public static native void yz_2_init(String terminalID, String cvsIp, int mediaPort, String wsIp, int wsPort,  String mediaFilePath, VehicleTransitListen_DSP vehicleTransitListen);
 	
 	/**
 	 * 销毁服务连接
 	 */
-	public native void yz_2_destory();
+	public static native void yz_2_destory();
 	
 	/**
 	 * 销毁服务连接（拼写正确版）
 	 */
-	public native void yz_2_destroy();
+	public static native void yz_2_destroy();
 	
 	/**
 	 * 用户登陆状态
@@ -145,7 +145,7 @@ public class YzJni {
 	 * @param userName 用户名称
 	 * @param state 用户状态 0在线 1异常退出 2正常注销
 	 */
-	public native void yz_3_loginstatecallback(String terminalID, long userId, String userName, int state);
+	public static native void yz_3_loginstatecallback(String terminalID, long userId, String userName, int state);
 	
 	/**
 	 * 修改文件存储地址
@@ -153,7 +153,7 @@ public class YzJni {
 	 * @param path 文件存储目录 
 	 * @return ？？？
 	 */
-	public native int yz_3_modifyMediaPath(String path);
+	public static native int yz_3_modifyMediaPath(String path);
 	
 	
 	
