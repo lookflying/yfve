@@ -49,8 +49,6 @@ typedef struct msg_serialized_message{
 #define HBYTE(w) ((MSG_BYTE)(w>>8))
 #define LBYTE(w) ((MSG_BYTE)(w&0xff))
 
-bool serialize(msg_message_t message, msg_serialized_message_t &serialized);
-bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
 
 #define MSG_PACK_PROPERTY(divided, encrypt, length) \
 	((MSG_WORD)(0x00|(divided?0x2000:0x0000)|((encrypt<<10)&0x1c00)|(length&0x03ff)))
@@ -84,11 +82,17 @@ extern unsigned int msg_g_max_pack_size;
 extern MSG_BCD msg_g_phone_num[MSG_PHONE_NUM_LEN];
 extern MSG_WORD msg_g_msg_seq;
 
+#define MSG_SEQ(message) \
+				(message.header.seq)
+
+bool serialize(msg_message_t message, msg_serialized_message_t &serialized);
+bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
+
 #define set_global_phone_num(phone_num,len) \
 	(bytes2phone_num((phone_num), (len), &msg_g_phone_num[0]))
 #define set_global_max_pack_size(size) \
 	 (msg_g_max_pack_size = (unsigned int)(size))
-bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed);
+bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed, std::vector<MSG_WORD> &packed_seq);
 
-bool unpack_msg(msg_serialized_message_t packed, MSG_WORD &msg_id, char** msg_data, unsigned int &len);
+bool unpack_msg(msg_message_t msg, MSG_WORD &msg_id, char** msg_data, unsigned int &len);
 #endif

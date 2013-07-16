@@ -91,12 +91,15 @@ TEST(pack_test, serialize_header){
 TEST(pack_test, small_sample){
 	char data[] = {0x30, 0x7e, 0x08, 0x7d, 0x55};
 	vector<msg_serialized_message_t> sample;
+	vector<MSG_WORD> packed_seq;
+	msg_message_t message;
 	char* unpacked;
 	unsigned int len;
 	MSG_WORD id;
 	print_hex(data, sizeof(data));
-	EXPECT_TRUE(pack_msg(0x0001, &data[0], 0x0000, sizeof(data), sample));
-	EXPECT_TRUE(unpack_msg(sample[0], id, &unpacked, len));
+	EXPECT_TRUE(pack_msg(0x0001, &data[0], 0x0000, sizeof(data), sample, packed_seq));
+	EXPECT_TRUE(deserialize(sample[0], message));
+	EXPECT_TRUE(unpack_msg(message, id, &unpacked, len));
 	EXPECT_EQ(sizeof(data), len);
 	print_hex(unpacked, sizeof(data));
 	EXPECT_EQ(0, strncmp(&data[0], unpacked, len));
@@ -111,24 +114,29 @@ TEST(pack_test, pack_unpack_message){
 	char* large_msg = new (nothrow) char[large_size];
 	ASSERT_TRUE(large_msg != NULL);
 	vector<msg_serialized_message_t> small, large;
+	vector<MSG_WORD> packed_seq;
 	set_global_max_pack_size(0);
-	EXPECT_TRUE(pack_msg(0x0001, small_msg, 0x0000, small_size, small));
-	EXPECT_TRUE(pack_msg(0x0002, large_msg, 0x0007, large_size, large));
+	EXPECT_TRUE(pack_msg(0x0001, small_msg, 0x0000, small_size, small, packed_seq));
+	EXPECT_TRUE(pack_msg(0x0002, large_msg, 0x0007, large_size, large, packed_seq));
 	EXPECT_EQ((small_size + 0x3ff - 1) / 0x3ff, small.size());
 	EXPECT_EQ((large_size + 0x3ff - 1) / 0x3ff, large.size());
 	char * unpacked;
 	unsigned int len;
 	MSG_WORD id;
-	EXPECT_TRUE(unpack_msg(small[0], id, &unpacked, len));
+	msg_message_t message;
+	EXPECT_TRUE(deserialize(small[0], message));
+	EXPECT_TRUE(unpack_msg(message, id, &unpacked, len));
 	for (vector<msg_serialized_message_t>::reverse_iterator it = large.rbegin();
 			it != large.rend();
 			++it){
-		if (unpack_msg(*it, id, &unpacked, len)){
+		EXPECT_TRUE(deserialize(*it, message));
+		if (unpack_msg(message, id, &unpacked, len)){
 			break;
 		}
 	}
 	EXPECT_EQ(large_size, len);
 	EXPECT_EQ(0, strncmp(large_msg, unpacked, large_size));
+	EXPECT_EQ(0x0002, id);
 }
 
 

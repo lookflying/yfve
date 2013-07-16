@@ -246,17 +246,19 @@ msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq){
 }
 
 
-bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed){
+bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, vector<msg_serialized_message_t> &packed, vector<MSG_WORD> &packed_seq){
 	packed.resize(0);
+	packed_seq.resize(0);
 	if ((MSG_MAX_PACK_SIZE == 0 || msg_len <= (unsigned int)MSG_MAX_PACK_SIZE) && msg_len <= (unsigned int)MSG_PACK_SIZE_LIMIT){
 		MSG_WORD property = MSG_PACK_PROPERTY(false, encrypt, msg_len);
 		msg_message_t temp_msg;
 		msg_serialized_message_t serialized_msg;
-		temp_msg.header = generate_header(id, property, msg_g_phone_num, msg_g_msg_seq++); 
+		temp_msg.header = generate_header(id, property, msg_g_phone_num, msg_g_msg_seq); 
 		temp_msg.body.content = (MSG_BYTE*) msg_data;
 		temp_msg.body.length = msg_len;
 		if (serialize(temp_msg, serialized_msg)){
 			packed.push_back(serialized_msg);
+			packed_seq.push_back(msg_g_msg_seq++);
 			return true;
 		}else{
 			return false;
@@ -284,24 +286,23 @@ bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int m
 			MSG_WORD property = MSG_PACK_PROPERTY(true, encrypt, cur_size);
 			msg_message_t temp_msg;
 			msg_serialized_message_t serialized_msg;
-			temp_msg.header = generate_header(id, property, msg_g_phone_num, msg_g_msg_seq++, generate_pack_option(count, seq + 1));
+			temp_msg.header = generate_header(id, property, msg_g_phone_num, msg_g_msg_seq, generate_pack_option(count, seq + 1));
 			temp_msg.body.content = (MSG_BYTE*) (msg_data + (seq * divided_size));
 			temp_msg.body.length = cur_size;
 			if (serialize(temp_msg, serialized_msg)){
 				packed.push_back(serialized_msg);
+				packed_seq.push_back(msg_g_msg_seq++);	
+				++seq;
 			}else{
 				return false;
 			}
-			++seq;
 		}
 		return true;
 	}	
 }
 
-bool unpack_msg(msg_serialized_message_t packed, MSG_WORD &msg_id, char** msg_data, unsigned int &msg_len){
-	msg_message_t msg;
+bool unpack_msg(msg_message_t msg, MSG_WORD &msg_id, char** msg_data, unsigned int &msg_len){
 	msg_len = 0;
-	if (deserialize(packed, msg)){
 		if (MSG_IS_DIVIDED(msg.header.property)){
 			if (msg_g_unpack_count == 0
 					|| msg_g_unpack_count != msg.header.pack_opt.pack_count
@@ -338,6 +339,5 @@ bool unpack_msg(msg_serialized_message_t packed, MSG_WORD &msg_id, char** msg_da
 			memcpy(*msg_data, msg.body.content, msg_len);
 			return true;
 		}
-	}
 	return false;
 }
