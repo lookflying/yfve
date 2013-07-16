@@ -90,5 +90,5 @@ extern MSG_WORD msg_g_msg_seq;
 	 (msg_g_max_pack_size = (unsigned int)(size))
 bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed);
 
-bool unpack_msg(msg_serialized_message_t packed, MSG_WORD &id, char** msg_data, unsigned int &len);
+bool unpack_msg(msg_serialized_message_t packed, MSG_WORD &msg_id, char** msg_data, unsigned int &len);
 #endif
