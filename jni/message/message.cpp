@@ -25,6 +25,14 @@ void clear_msg(msg_message_t &msg){
 	msg.body.length = 0;
 }
 
+void clear_serialized_msg(msg_serialized_message_t &serialized){
+	if (serialized.length > 0){
+		delete[] serialized.data;
+	}
+	serialized.data = NULL;
+	serialized.length = 0;
+}
+
 void clear_upack_cache(){
 	for (map<MSG_WORD, msg_message_t>::iterator it = msg_g_unpack_cache.begin();
 			it !=msg_g_unpack_cache.end();

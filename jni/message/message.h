@@ -118,7 +118,7 @@ bool serialize(msg_message_t message, msg_serialized_message_t &serialized);
 /*
  *反序列化消息（主要对外接口）
  *serialized 待反序列化的消息
- *message 序列化后的消息
+ *message 序列化后的消息（动态申请内存，使用后需清理）
  *返回值，反序列化成功返回true，失败返回false
  */
 bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
@@ -139,7 +139,7 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
  *msg_data 消息的内容
  *encrypt 消息的加密类型（取低3位，格式定义如消息体属性格式结构的10到12位
  *msg_len 消息的长度
- *packed 封装后的消息
+ *packed 封装后的消息（动态申请内存，使用后需要清理）
  *packed_seq 封装后的消息对应的流水号
  *返回值，成功封装返回true，失败返回false
  * */
@@ -147,7 +147,7 @@ bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int m
 
 /*
  *解包消息（主要对外接口）
- *利用全局缓存，每次接受一个反序列化后的消息，若与缓存中的消息组合能够成功解包，则返回true，并将消息内容拷贝至msg_data（动态申请内存）
+ *利用全局缓存，每次接受一个反序列化后的消息，若与缓存中的消息组合能够成功解包，则返回true，并将消息内容拷贝至msg_data（动态申请内存，使用后需要清理）
  *msg 当前输入的消息
  *msg_id 解包成功后，获得的消息的消息ID
  *msg_data 指向消息数据的指针
@@ -155,4 +155,13 @@ bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int m
  *返回值，成功解包返回true，尚未能够成功解包或者解包失败返回false
  */
 bool unpack_msg(msg_message_t msg, MSG_WORD &msg_id, char** msg_data, unsigned int &len);
+
+/*
+ *清理消息体
+ */
+void clear_msg(msg_message_t &msg);
+/*
+ *清理序列化的消息体
+ */
+void clear_serialized_msg(msg_serialized_message_t &serialized);
 #endif
