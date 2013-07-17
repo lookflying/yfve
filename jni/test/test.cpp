@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "../message/message.h"
+#include "../YzJni.h"
 #include <string>
 #include <cstring>
 #include <cstdlib>
@@ -139,6 +140,18 @@ TEST(pack_test, pack_unpack_message){
 	EXPECT_EQ(0x0002, id);
 }
 
+/*
+TEST(jni_test, string_char_converter){
+	char* cptr = new (nothrow) char[(int)'z' - (int)'A' + 1];
+	ASSERT_FLASE(cptr == NULL);
+	char* ptr = cptr;
+	for (char c = 'A'; c < 'z'; ++c){
+		*ptr++ = c;
+	}
+	*ptr = (char)0;
+	jstring jstr = string2jstring(
+}
+*/
 
 int main(int argc, char** argv){
 	::testing::InitGoogleTest(&argc, argv);

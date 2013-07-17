@@ -4,7 +4,8 @@
  *  Created on: Jul 17, 2013
  *      Author: lookflying
  */
-
+#include <jni.h>
+#include <string>
 #ifndef YZERR_H_
 #define YZERR_H_
 
@@ -21,5 +22,6 @@
 #define YZ_DEVICE_NOT_REGIST	(1009)//终端未被正确注册
 #define YZ_DEVICE_NOT_BINDING	(1010)//终端未绑定有效车辆
 
-
+std::string jstring2string(JNIEnv* env, jstring jstr);
+jstring string2jstring(JNIEnv* env, const std::string str);
 #endif /* YZERR_H_ */

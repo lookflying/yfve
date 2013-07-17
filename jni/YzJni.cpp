@@ -1,10 +1,12 @@
 #include "YzJni.h"
-#include "YzErr.h"
+#include "YzHelper.h"
 #include "message/message.h"
 #include "log4z.h"
 #include <ctime>
-
+#include <stdlib.h>
 using namespace std;
+
+
 /*
  * Class:     YzJni
  * Method:    yz_2_userlogin
@@ -144,6 +146,7 @@ using namespace std;
  * Signature: (Ljava/lang/String;DDILWeatherSturt_DSP;)I
  */JNIEXPORT jint JNICALL Java_YzJni_yz_13_1getweather__Ljava_lang_String_2DDILWeatherSturt_1DSP_2(
 		JNIEnv * env, jclass cls, jstring, jdouble, jdouble, jint, jobject) {
+	 //缺乏消息体及数据格式定义，尚不能实现
 	return YZ_CON_CLOSED;
 }
 
@@ -153,6 +156,8 @@ using namespace std;
  * Signature: (LWeatherSturt_DSP;)V
  */JNIEXPORT void JNICALL Java_YzJni_yz_13_1weathercallback(JNIEnv * env,
 		jclass cls, jobject) {
+
+	//应为回调函数，尚不能实现
 }
 
 /*
@@ -161,6 +166,7 @@ using namespace std;
  * Signature: (Ljava/lang/String;Ljava/lang/String;ILWeatherSturt_DSP;)I
  */JNIEXPORT jint JNICALL Java_YzJni_yz_13_1getweather__Ljava_lang_String_2Ljava_lang_String_2ILWeatherSturt_1DSP_2(
 		JNIEnv * env, jclass cls, jstring, jstring, jint, jobject) {
+	 //缺乏消息体及数据格式，尚不能实现
 	return YZ_CON_CLOSED;
 }
 
@@ -178,6 +184,8 @@ using namespace std;
  * Signature: (Ljava/lang/String;Ljava/lang/String;I)I
  */JNIEXPORT jint JNICALL Java_YzJni_yz_13_1gettmc(JNIEnv * env, jclass cls,
 		jstring, jstring, jint) {
+	 //TODO
+	 //缺少数据格式定义，尚不能实现
 	return YZ_CON_CLOSED;
 }
 
@@ -187,6 +195,7 @@ using namespace std;
  * Signature: (LTMCStruct_DSP;)V
  */JNIEXPORT void JNICALL Java_YzJni_yz_13_1TMCcallback(JNIEnv * env, jclass cls,
 		jobject) {
+	 //TODO
 }
 
 /*
@@ -195,6 +204,7 @@ using namespace std;
  * Signature: (Ljava/lang/String;LVehicleDataStruct_CVS;)I
  */JNIEXPORT jint JNICALL Java_YzJni_yz_13_1sendvehicledata(JNIEnv * env,
 		jclass cls, jstring, jobject) {
+	 //缺乏数据格式定义，尚不能实现
 	return YZ_CON_CLOSED;
 }
 
@@ -203,16 +213,19 @@ using namespace std;
  * Method:    yz_2_init
  * Signature: (Ljava/lang/String;Ljava/lang/String;I)V
  */JNIEXPORT void JNICALL Java_YzJni_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2I(
-		JNIEnv * env, jclass cls, jstring, jstring, jint) {
+		JNIEnv * env, jclass cls, jstring terminal_id, jstring cvs_ip, jint cvs_port) {
+	 string con_terminal_id = jstring2string(env, terminal_id);
+	 string con_cvs_ip = jstring2string(env, cvs_ip);
+	 int con_cvs_port = cvs_port;
+
 }
 
 /*
  * Class:     YzJni
  * Method:    yz_2_init
  * Signature: (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ILjava/lang/String;LVehicleTransitListen_DSP;)V
- */JNIEXPORT void JNICALL Java_YzJni_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILjava_lang_String_2ILjava_lang_String_2LVehicleTransitListen_1DSP_2(
-		JNIEnv * env, jclass cls, jstring, jstring, jint, jstring, jint,
-		jstring, jobject) {
+ */JNIEXPORT void JNICALL Java_YzJni_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILjava_lang_String_2ILjava_lang_String_2LVehicleTransitListen_1DSP_2(JNIEnv * env, jclass cls, jstring, jstring, jint, jstring, jint, jstring, jobject) {
+
 }
 
 /*

@@ -4,6 +4,7 @@ LOCAL_MODULE	:= yz_comm
 LOCAL_CXXFLAGS := -DHAVE_PTHREADS
 LOCAL_SRC_FILES := YzJni.cpp	\
 					message/message.cpp \
-					log4z.cpp
+					log4z.cpp \
+					YzHelper.cpp
 									
 include $(BUILD_SHARED_LIBRARY)

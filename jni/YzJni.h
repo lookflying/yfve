@@ -143,6 +143,7 @@ JNIEXPORT void JNICALL Java_YzJni_yz_13_1loginstatecallback
 JNIEXPORT jint JNICALL Java_YzJni_yz_13_1modifyMediaPath
   (JNIEnv *, jclass, jstring);
 
+
 #ifdef __cplusplus
 }
 #endif
