@@ -2,6 +2,7 @@
 #define MESSAGE_H
 #include <stdint.h>
 #include <vector>
+#include <string>
 typedef uint8_t MSG_BYTE;
 typedef uint16_t MSG_WORD;
 typedef uint32_t MSG_DWORD;
@@ -46,8 +47,10 @@ typedef struct msg_serialized_message{
 	unsigned int length;
 } msg_serialized_message_t;
 
-#define HBYTE(w) ((MSG_BYTE)(w>>8))
-#define LBYTE(w) ((MSG_BYTE)(w&0xff))
+#define HBYTE(w) ((MSG_BYTE)((w)>>8))
+#define LBYTE(w) ((MSG_BYTE)((w)&0xff))
+#define HWORD(dw)	((MSG_WORD)((dw)>>16))
+#define LWORD(dw)	((MSG_WORD)((dw)&0xffff))
 
 
 #define MSG_PACK_PROPERTY(divided, encrypt, length) \
@@ -90,6 +93,11 @@ msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq);
 #define MSG_SET_WORD(word, hbyte, lbyte) \
 	((word) = (((((MSG_WORD)(hbyte))<<8)&0xff00) | (((MSG_WORD)(lbyte))&0x00ff)))
 
+#define MSG_SET_DWORD(dword, hhbyte, hlbyte, lhbyte, llbyte) \
+	((dword) = (((((MSG_DWORD)(hhbyte))<<24)&0xff000000) \
+			  | ((((MSG_DWORD)(hlbyte))<<16)&0x00ff0000) \
+			  |	((((MSG_DWORD)(lhbyte))<<8 )&0x0000ff00) \
+			  |	((((MSG_DWORD)(llbyte))    ))))
 /*
  *单包最大消息尺寸
  */
@@ -164,4 +172,14 @@ void clear_msg(msg_message_t &msg);
  *清理序列化的消息体
  */
 void clear_serialized_msg(msg_serialized_message_t &serialized);
+
+/**
+ * 将WORD转换为大端字节流
+ */
+std::string big_endian(MSG_WORD word);
+
+/**
+ * 将DWORD转换为大端字符流
+ */
+std::string big_endian(MSG_DWORD dword);
 #endif

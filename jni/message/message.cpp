@@ -46,10 +46,17 @@ void clear_upack_cache(){
 
 
 
-static string big_endian(MSG_WORD word){
+string big_endian(MSG_WORD word){
 	string str = "";
 	str += (char)HBYTE(word);
 	str += (char)LBYTE(word);
+	return str;
+}
+
+string big_endian(MSG_DWORD dword){
+	string str = "";
+	str += big_endian(HWORD(dword));
+	str += big_endian(LWORD(dword));
 	return str;
 }
 
