@@ -210,6 +210,8 @@ private:
 	 */
 	void messageHandler(MSG_WORD msgid, MSG_WORD msgSerail, msg_body *body);
 
+	static void *reconnectWorker(void *);
+
 	/**
 	 * start ev watcher
 	 */
@@ -227,6 +229,7 @@ private:
 	struct sockaddr_in servaddr_;
 	bool addressInited_;
 	Status status_;
+	bool needReauthorization_;
 	int sockfd_;
 	struct ev_io evwatcher_;
 	struct ev_timer evtimer_;
@@ -245,6 +248,7 @@ private:
 	int heartbeatIntervalSeconds_;
 	int heartbeatDeadCount_;
 	std::vector<PackedMessage*> pendingMsgs_;
+	pthread_t reconnectTid_;
 
 	static const int DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS;
 	static const int DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS;

@@ -37,7 +37,7 @@ using namespace std;
 
 const int Connection::DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS = 30;
 const int Connection::DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS = 30;
-const int Connection::DEFAULT_HEARTBEAT_ITNERVAL_SECONDS = 10;
+const int Connection::DEFAULT_HEARTBEAT_ITNERVAL_SECONDS = 30;
 
 const int ENCRYPTION = 0;
 
@@ -77,13 +77,13 @@ int sendAll(int sockfd, const void *buf, size_t len, int opts)
 }
 
 Connection::Connection()
-	: authorizationCode_(), name_("unknown"), ip_(), port_(0), addressInited_(false), status_(CLOSED), sockfd_(-1),
+	: authorizationCode_(), name_("unknown"), ip_(), port_(0), addressInited_(false), status_(CLOSED),needReauthorization_(false), sockfd_(-1),
 	  loop_(NULL), //dataHandler_(NULL), closedHandler_(NULL),
 	  closedHandler_(NULL), messageHandler_(NULL),
 	  messageRetryIntervalSeconds_(DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS),
 	  connectRetryIntervalSeconds_(DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS),
 	  maxConnectRetry_(3), packetStarted_(false), latestPacketRecievedTime_(0),
-	  heartbeatIntervalSeconds_(DEFAULT_HEARTBEAT_ITNERVAL_SECONDS), heartbeatDeadCount_(3)
+	  heartbeatIntervalSeconds_(DEFAULT_HEARTBEAT_ITNERVAL_SECONDS), heartbeatDeadCount_(3), reconnectTid_(0)
 {
 	bzero(&this->evwatcher_, sizeof(this->evwatcher_));
 	bzero(&this->evtimer_, sizeof(this->evtimer_));
@@ -92,11 +92,14 @@ Connection::Connection()
 	pthread_mutex_init(&this->mutex_, NULL);
 	pthread_cond_init(&this->cond_, NULL);
 	buffer_.reserve(BUF_SIZE);
+
+	pthread_create(&this->reconnectTid_, NULL, reconnectWorker, this);
 }
 
 Connection::~Connection()
 {
 	this->disconnect();
+	pthread_cancel(this->reconnectTid_);
 }
 
 /**
@@ -218,6 +221,7 @@ int Connection::connectAndAuthorize()
 {
 	ScopeLock lock(&this->mutex_);
 	int ret = this->do_connectAndAuthorize();
+	this->needReauthorization_ = ret == 0 || ret == YZ_DUP_LOGIN;
 	if (ret != 0) {
 		return ret;
 	}
@@ -239,7 +243,7 @@ int Connection::connectAndAuthorize()
 
 int Connection::do_connectAndAuthorize()
 {
-	if (this->status_ == CLOSED) {
+	if (this->status_ < CONNECTED) {
 		if (this->addressInited_ == false) {
 			return YZ_SOCK_ERROR;
 		}
@@ -250,6 +254,7 @@ int Connection::do_connectAndAuthorize()
 	}
 
 	if (this->status_ == CONNECTED) {
+		LOGD("start authorizing");
 		this->status_ = CONNECTED_AUTHORIZING;
 		PackedMessage packedmsg(YZMSGID_TERMINAL_AUTHORIZE, 0);
 		if (pack_msg(packedmsg.msgid, authorizationCode_.c_str(), ENCRYPTION, authorizationCode_.length(), packedmsg.packets, packedmsg.serial) == false) {
@@ -574,6 +579,7 @@ int Connection::do_sendMessageAndWait(const PackedMessage &msg, msg_body_t **pbo
 			++retryCount;
 			interval = interval * retryCount;
 			int ret = this->do_connectAndAuthorize();
+			this->needReauthorization_ = ret == 0 || ret == YZ_DUP_LOGIN;
 			if (ret != 0) {
 				return ret;
 			}
@@ -643,9 +649,11 @@ void Connection::timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents)
 			connection->status_ = CONNECTING;
 			pthread_cond_broadcast(&connection->cond_);
 		} else {
-			// send heatbeat msg
-			LOGI("sending heart beat");
-			connection->sendMessage(YZMSGID_TERMINAL_HEARTBEAT, NULL, 0);
+			if (connection->status_ > CONNECTING) {
+				// send heatbeat msg
+				LOGI("sending heart beat");
+				connection->sendMessage(YZMSGID_TERMINAL_HEARTBEAT, NULL, 0);
+			}
 		}
 	}
 }
@@ -671,7 +679,28 @@ void Connection::stopEv()
 	ev_timer_stop(this->loop_, &this->evtimer_);
 }
 
+void *Connection::reconnectWorker(void *param)
+{
+	Connection *conn = static_cast<Connection*>(param);
+	ScopeLock lock(&conn->mutex_);
 
+	while (true) {
+		LOGD("reconnect worker, while " << conn->status_ << ' ' << conn->needReauthorization_);
+		if (conn->status_ == CONNECTING) {
+			if (conn->needReauthorization_) {
+				LOGD("reconnecting...");
+
+				int ret = conn->do_connectAndAuthorize();
+				LOGD("reconnect " << ret << " " << conn->status_);
+				conn->needReauthorization_ = ret == 0 || ret == YZ_DUP_LOGIN;
+			} else {
+				// todo need reconnect or not
+			}
+		}
+
+		pthread_cond_wait(&conn->cond_, &conn->mutex_);
+	}
+}
 
 
 
