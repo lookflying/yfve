@@ -37,7 +37,7 @@ using namespace std;
 
 const int Connection::DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS = 30;
 const int Connection::DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS = 30;
-const int Connection::DEFAULT_HEARTBEAT_ITNERVAL_SECONDS = 30;
+const int Connection::DEFAULT_HEARTBEAT_ITNERVAL_SECONDS = 10;
 
 const int ENCRYPTION = 0;
 
@@ -99,7 +99,9 @@ Connection::Connection()
 Connection::~Connection()
 {
 	this->disconnect();
-	pthread_cancel(this->reconnectTid_);
+	// ndk doesn't support pthread_cancel
+//	pthread_cancel(this->reconnectTid_);
+	pthread_kill(this->reconnectTid_, SIGUSR1);
 }
 
 /**
@@ -679,8 +681,21 @@ void Connection::stopEv()
 	ev_timer_stop(this->loop_, &this->evtimer_);
 }
 
+void thread_exit_handler(int sig)
+{
+	pthread_exit(0);
+}
+
 void *Connection::reconnectWorker(void *param)
 {
+	struct sigaction actions;
+	memset(&actions, 0, sizeof(actions));
+	sigemptyset(&actions.sa_mask);
+	actions.sa_flags = 0;
+	actions.sa_handler = thread_exit_handler;
+	sigaction(SIGUSR1,&actions,NULL);
+
+
 	Connection *conn = static_cast<Connection*>(param);
 	ScopeLock lock(&conn->mutex_);
 
@@ -700,8 +715,8 @@ void *Connection::reconnectWorker(void *param)
 
 		pthread_cond_wait(&conn->cond_, &conn->mutex_);
 	}
+	return NULL;
 }
-
 
 
 
