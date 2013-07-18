@@ -12,10 +12,10 @@ MSG_WORD msg_g_msg_seq = 0;
 /*单包最大数据尺寸*/
 unsigned int msg_g_max_pack_size = 0;
 
-map<MSG_WORD, msg_message_t> msg_g_unpack_cache;
-MSG_WORD msg_g_unpack_count = 0;
-unsigned int msg_g_unpack_size = 0;
-MSG_WORD msg_g_id = 0;
+map<MSG_WORD, map<MSG_WORD, msg_message_t> > msg_g_unpack_cache;
+map<MSG_WORD, MSG_WORD> msg_g_unpack_count;
+map<MSG_WORD, unsigned int> msg_g_unpack_size;
+map<MSG_WORD, MSG_WORD>	msg_g_unpack_id;
 
 void clear_msg(msg_message_t &msg){
 	if (msg.body.length > 0){
@@ -33,15 +33,21 @@ void clear_serialized_msg(msg_serialized_message_t &serialized){
 	serialized.length = 0;
 }
 
-void clear_upack_cache(){
-	for (map<MSG_WORD, msg_message_t>::iterator it = msg_g_unpack_cache.begin();
-			it !=msg_g_unpack_cache.end();
-			++it){
-		clear_msg(it->second);
+
+
+void clear_unpack_cache(const MSG_WORD msg_seq){
+	map<MSG_WORD, map<MSG_WORD, msg_message_t> >::iterator it;
+	map<MSG_WORD, msg_message_t>::iterator msg_it;
+	if ((it = msg_g_unpack_cache.find(msg_seq)) != msg_g_unpack_cache.end()){
+		for (msg_it = it->second.begin(); msg_it != it->second.end(); ++msg_it){
+			clear_msg(msg_it->second);
+		}
+		it->second.clear();
+		msg_g_unpack_count[msg_seq] = 0;
+		msg_g_unpack_size[msg_seq] = 0;
+		msg_g_unpack_id[msg_seq] = 0;
 	}
-	msg_g_unpack_cache.clear();	
-	msg_g_unpack_count = 0; 
-	msg_g_unpack_size = 0;
+	msg_g_unpack_cache.erase(it);
 }
 
 
@@ -272,6 +278,7 @@ bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encry
 		if (serialize(temp_msg, serialized_msg)){
 			msg_seq = msg_g_msg_seq;
 			msg_g_msg_seq++;			
+			packed.push_back(serialized_msg);
 			return true;
 		}else{
 			return false;
@@ -303,8 +310,13 @@ bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encry
 			temp_msg.body.content = (MSG_BYTE*) (msg_data + (seq * divided_size));
 			temp_msg.body.length = cur_size;
 			if (!serialize(temp_msg, serialized_msg)){
+				for (vector<msg_serialized_message_t>::iterator it = packed.begin(); it != packed.end(); ++it){
+					clear_serialized_msg(*it);
+				}
 				return false;
 			}
+			packed.push_back(serialized_msg);
+			++seq;
 		}
 		msg_seq = msg_g_msg_seq;
 		msg_g_msg_seq++;			
@@ -312,38 +324,46 @@ bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encry
 	}	
 }
 
-bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, char** msg_data, unsigned int &msg_len){
+bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, MSG_WORD &msg_seq, char** msg_data, unsigned int &msg_len){
 	msg_len = 0;
 	if (MSG_IS_DIVIDED(msg.header.property)){
-		if (msg_g_unpack_count == 0
-				|| msg_g_unpack_count != msg.header.pack_opt.pack_count
-				|| msg_g_id == 0
-				|| msg_g_id != msg.header.id
-				|| msg_g_unpack_cache.find(msg.header.pack_opt.pack_seq) != msg_g_unpack_cache.end()){
-			clear_upack_cache();
-			msg_g_id = msg.header.id;
-			msg_g_unpack_count = msg.header.pack_opt.pack_count;
+		map<MSG_WORD, map<MSG_WORD, msg_message_t> >::iterator it;
+		map<MSG_WORD, msg_message_t>::iterator msg_it;
+		if ((it = msg_g_unpack_cache.find(msg.header.seq)) != msg_g_unpack_cache.end()){
+						if (msg_g_unpack_id[msg.header.seq] != msg.header.id
+								||msg_g_unpack_count[msg.header.seq] != msg.header.pack_opt.pack_count){
+							clear_unpack_cache(msg.header.seq);							
+							msg_g_unpack_id[msg.header.seq] = msg.header.id;
+							msg_g_unpack_count[msg.header.seq] = msg.header.pack_opt.pack_count;
+						}
+		}else{
+			msg_g_unpack_cache[msg.header.seq] = map<MSG_WORD, msg_message_t>();
+			it = msg_g_unpack_cache.find(msg.header.seq);
+			msg_g_unpack_id[msg.header.seq] = msg.header.id;
+			msg_g_unpack_count[msg.header.seq] = msg.header.pack_opt.pack_count;
+			msg_g_unpack_size[msg.header.seq] = 0;
 		}
-		msg_g_unpack_cache[msg.header.pack_opt.pack_seq] = msg;
-		msg_g_unpack_size += MSG_LENGTH(msg.header.property);
-		if (msg_g_unpack_cache.size() == msg_g_unpack_count){
-			*msg_data = new (nothrow) char[msg_g_unpack_size];
+		it->second[msg.header.pack_opt.pack_seq] = msg;
+		msg_g_unpack_size[msg.header.seq] += MSG_LENGTH(msg.header.property);
+		if (it->second.size() == msg_g_unpack_count[msg.header.seq]){
+			*msg_data = new (nothrow) char[msg_g_unpack_size[msg.header.seq]];
 			if (msg_data == NULL)
 				return false;
 			char* ptr = *msg_data;
-			for (MSG_WORD i = 0; i < msg_g_unpack_count; ++i){
-				unsigned int len = MSG_LENGTH(msg_g_unpack_cache[i].header.property);
-				memcpy(ptr, msg_g_unpack_cache[i].body.content, len);
+			for (MSG_WORD i = 0; i < msg_g_unpack_count[msg.header.seq]; ++i){
+				unsigned int len = MSG_LENGTH(it->second[i].header.property);
+				memcpy(ptr, it->second[i].body.content, len);
 				ptr += len;
 			}
-			msg_len = msg_g_unpack_size;
-			msg_id = msg_g_id;
+			msg_len = msg_g_unpack_size[msg.header.seq];
+			msg_id = msg_g_unpack_id[msg.header.seq];
+			msg_seq = msg.header.seq;
 			return true;
 		}
 	}else{
-		clear_upack_cache();
 		msg_len = MSG_LENGTH(msg.header.property);
 		msg_id = msg.header.id;
+		msg_seq = msg.header.seq;
 		*msg_data = new (nothrow) char[msg_len];
 		if (*msg_data == NULL)
 			return false;

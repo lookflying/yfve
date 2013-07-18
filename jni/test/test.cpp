@@ -95,11 +95,14 @@ TEST(pack_test, small_sample){
 	msg_message_t message;
 	char* unpacked;
 	unsigned int len;
-	MSG_WORD id;
+	MSG_WORD unpacked_id;
+	MSG_WORD unpacked_seq;
 	print_hex(data, sizeof(data));
 	EXPECT_TRUE(pack_msg(0x0001, &data[0], 0x0000, sizeof(data), sample, msg_seq));
 	EXPECT_TRUE(deserialize(sample[0], message));
-	EXPECT_TRUE(unpack_msg(message, id, &unpacked, len));
+	EXPECT_TRUE(unpack_msg(message, unpacked_id, unpacked_seq, &unpacked, len));
+	EXPECT_EQ(0x0001, unpacked_id);
+	EXPECT_EQ(msg_seq, unpacked_seq);
 	EXPECT_EQ(sizeof(data), len);
 	print_hex(unpacked, sizeof(data));
 	EXPECT_EQ(0, strncmp(&data[0], unpacked, len));
@@ -122,21 +125,25 @@ TEST(pack_test, pack_unpack_message){
 	EXPECT_EQ((large_size + 0x3ff - 1) / 0x3ff, large.size());
 	char * unpacked;
 	unsigned int len;
-	MSG_WORD id;
+	MSG_WORD unpacked_id;
+	MSG_WORD unpacked_seq;
 	msg_message_t message;
 	EXPECT_TRUE(deserialize(small[0], message));
-	EXPECT_TRUE(unpack_msg(message, id, &unpacked, len));
+	EXPECT_TRUE(unpack_msg(message, unpacked_id, unpacked_seq, &unpacked, len));
+	EXPECT_EQ(0x0001, unpacked_id);
+	EXPECT_EQ(small_msg_seq, unpacked_seq);
 	for (vector<msg_serialized_message_t>::reverse_iterator it = large.rbegin();
 			it != large.rend();
 			++it){
 		EXPECT_TRUE(deserialize(*it, message));
-		if (unpack_msg(message, id, &unpacked, len)){
+		if (unpack_msg(message, unpacked_id, unpacked_seq, &unpacked, len)){
 			break;
 		}
 	}
 	EXPECT_EQ(large_size, len);
 	EXPECT_EQ(0, strncmp(large_msg, unpacked, large_size));
-	EXPECT_EQ(0x0002, id);
+	EXPECT_EQ(0x0002, unpacked_id);
+	EXPECT_EQ(large_msg_seq, unpacked_seq);
 }
 
 /*

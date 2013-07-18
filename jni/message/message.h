@@ -162,7 +162,7 @@ bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encry
  *len 消息的长度
  *返回值，成功解包返回true，尚未能够成功解包或者解包失败返回false
  */
-bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, char** msg_data, unsigned int &len);
+bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, MSG_WORD &msg_seq, char** msg_data, unsigned int &len);
 
 /*
  *清理消息体
