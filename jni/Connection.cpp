@@ -5,7 +5,7 @@
  *  Author: ushrimp
  */
 
-
+#include "Connection.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -47,6 +47,12 @@ std::set<MSG_WORD> Connection::responseMsgIdSet;
 class PackedMessage {
 public:
 	vector<msg_serialized_message_t> packets;
+	MSG_WORD msgid;
+	MSG_WORD serial;
+
+	PackedMessage(MSG_WORD id, MSG_WORD ser)
+		: msgid(id), serial(ser)
+	{ }
 
 	~PackedMessage()
 	{
@@ -70,19 +76,14 @@ int sendAll(int sockfd, const void *buf, size_t len, int opts)
 	return 0;
 }
 
-Connection::Connection(const std::string &name, struct ev_loop *loop,
-		               int messageRetryIntervalSeconds/* = DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS*/,
-		               int connectRetryIntervalSeconds/* = DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS*/,
-		               int maxConnectRetry/* = 0*/,
-		               int heartbeatInterval/* = DEFAULT_HEARTBEAT_ITNERVAL_SECONDS*/,
-		               int heartbeatDeadCount/* = 3*/)
-	: authorizationCode_(), name_(name), ip_(), port_(0), addressInited_(false), status_(sCLOSED), sockfd_(-1),
-	  loop_(loop), //dataHandler_(NULL), closedHandler_(NULL),
+Connection::Connection()
+	: authorizationCode_(), name_("unknown"), ip_(), port_(0), addressInited_(false), status_(CLOSED), sockfd_(-1),
+	  loop_(NULL), //dataHandler_(NULL), closedHandler_(NULL),
 	  closedHandler_(NULL), messageHandler_(NULL),
-	  messageRetryIntervalSeconds_(messageRetryIntervalSeconds),
-	  connectRetryIntervalSeconds_(connectRetryIntervalSeconds),
-	  maxConnectRetry_(maxConnectRetry), packetStarted_(false), latestPacketRecievedTime_(0),
-	  heartbeatIntervalSeconds_(heartbeatInterval), heartbeatDeadCount_(heartbeatDeadCount)
+	  messageRetryIntervalSeconds_(DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS),
+	  connectRetryIntervalSeconds_(DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS),
+	  maxConnectRetry_(3), packetStarted_(false), latestPacketRecievedTime_(0),
+	  heartbeatIntervalSeconds_(DEFAULT_HEARTBEAT_ITNERVAL_SECONDS), heartbeatDeadCount_(3)
 {
 	bzero(&this->evwatcher_, sizeof(this->evwatcher_));
 	bzero(&this->evtimer_, sizeof(this->evtimer_));
@@ -109,7 +110,7 @@ int Connection::initServerAddr(const std::string &ip, int port)
 {
 	ScopeLock lock(&this->mutex_);
 
-	if (this->status_ != sCLOSED) {
+	if (this->status_ != CLOSED) {
 		return 1;
 	}
 	LOGD("initialize connection " << this->name_ << " with " << ip << ':' << port);
@@ -138,7 +139,7 @@ int Connection::initServerAddr(const std::string &ip, int port)
 int Connection::connect()
 {
 	ScopeLock lock(&this->mutex_);
-	if (this->status_ != sCLOSED) {
+	if (this->status_ != CLOSED) {
 		return YZ_OK;
 	}
 	if (this->addressInited_ == false) {
@@ -158,7 +159,7 @@ int Connection::connect()
 int Connection::do_connect(int retry)
 {
 	this->do_disconnect();
-	this->status_ = sCONNECTING;
+	this->status_ = CONNECTING;
 
 	bool forever = (retry == 0) ? true : false;
 	int retryTime = 1, error = 0, sockfd = -1;
@@ -195,11 +196,11 @@ int Connection::do_connect(int retry)
 
 	if (error == YZ_OK) {
 		this->sockfd_ = sockfd;
-		this->status_ = sCONNECTED;
+		this->status_ = CONNECTED;
 		this->startEv();
 	} else {
 		this->sockfd_ = -1;
-		this->status_ = sCLOSED;
+		this->status_ = CLOSED;
 	}
 	return error;
 }
@@ -216,12 +217,29 @@ int Connection::do_connect(int retry)
 int Connection::connectAndAuthorize()
 {
 	ScopeLock lock(&this->mutex_);
-	return this->do_connectAndAuthorize();
+	int ret = this->do_connectAndAuthorize();
+	if (ret != 0) {
+		return ret;
+	}
+
+	while (this->pendingMsgs_.empty() == false) {
+		msg_body_t *body;
+		ret = this->do_sendMessageAndWait(**this->pendingMsgs_.rbegin(), &body);
+		if (ret != 0) {
+			return ret;
+		} else {
+			delete body->content;
+			delete body;
+			this->pendingMsgs_.erase(this->pendingMsgs_.end() - 1);
+		}
+	}
+
+	return 0;
 }
 
 int Connection::do_connectAndAuthorize()
 {
-	if (this->status_ == sCLOSED) {
+	if (this->status_ == CLOSED) {
 		if (this->addressInited_ == false) {
 			return YZ_SOCK_ERROR;
 		}
@@ -231,11 +249,10 @@ int Connection::do_connectAndAuthorize()
 		}
 	}
 
-	if (this->status_ == sCONNECTED) {
-		this->status_ = sCONNECTED_AUTHORIZING;
-		PackedMessage packedmsg;
-		MSG_WORD msgSerial = 0;
-		if (pack_msg(YZMSGID_TERMINAL_AUTHORIZE, authorizationCode_.c_str(), ENCRYPTION, authorizationCode_.length(), packedmsg.packets, msgSerial) == false) {
+	if (this->status_ == CONNECTED) {
+		this->status_ = CONNECTED_AUTHORIZING;
+		PackedMessage packedmsg(YZMSGID_TERMINAL_AUTHORIZE, 0);
+		if (pack_msg(packedmsg.msgid, authorizationCode_.c_str(), ENCRYPTION, authorizationCode_.length(), packedmsg.packets, packedmsg.serial) == false) {
 			this->disconnect();
 			return YZ_OUT_OF_MEM;
 		}
@@ -245,12 +262,12 @@ int Connection::do_connectAndAuthorize()
 		int interval = this->connectRetryIntervalSeconds_;
 		while (retryForever || retryCount <= this->maxConnectRetry_) {
 			msg_body_t *pbody;
-			if (this->sendMessageOnceAndWait(interval, msgSerial, packedmsg.packets, &pbody) == true) {
+			if (this->sendMessageOnceAndWait(interval, packedmsg.serial, packedmsg.packets, &pbody) == true) {
 				GeneralResponseMessage response(*pbody);
 				delete[] pbody->content;
 				delete pbody;
 				if (response.result == GENERAL_RESPONSE_SUCCEED) {
-					this->status_ = sCONNECTED_AUTHORIZED;
+					this->status_ = CONNECTED_AUTHORIZED;
 					return YZ_OK;
 				} else {
 					this->disconnect();
@@ -261,7 +278,7 @@ int Connection::do_connectAndAuthorize()
 				interval = interval * retryCount;
 				int ret = this->do_connect(1);
 				if (ret != 0) {
-					this->status_ = sCLOSED;
+					this->status_ = CLOSED;
 					return ret;
 				}
 			}
@@ -282,15 +299,14 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg)
 {
 	ScopeLock lock(&this->mutex_);
 
-	if (this->status_ == sCLOSED) {
+	if (this->status_ == CLOSED) {
 		return YZ_CON_CLOSED;
 	}
 
 	char *buf = msg.toBytes();
 	size_t len = msg.len();
-	PackedMessage packedmsg;
-	MSG_WORD msgSerial = 0;
-	if (pack_msg(YZMSGID_TERMINAL_REGISTER, buf, ENCRYPTION, len, packedmsg.packets, msgSerial) == false) {
+	PackedMessage packedmsg(YZMSGID_TERMINAL_REGISTER, 0);
+	if (pack_msg(YZMSGID_TERMINAL_REGISTER, buf, ENCRYPTION, len, packedmsg.packets, packedmsg.serial) == false) {
 		this->disconnect();
 		delete buf;
 		return YZ_OUT_OF_MEM;
@@ -302,7 +318,7 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg)
 	int interval = this->connectRetryIntervalSeconds_;
 	while (retryForever || retryCount <= this->maxConnectRetry_) {
 		msg_body_t *pbody;
-		if (this->sendMessageOnceAndWait(interval, msgSerial, packedmsg.packets, &pbody) == true) {
+		if (this->sendMessageOnceAndWait(interval, packedmsg.serial, packedmsg.packets, &pbody) == true) {
 			TerminalRegisterResponseMessage response;
 			response.parse(*pbody);
 			delete pbody->content;
@@ -327,7 +343,7 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg)
 			interval = interval * retryCount;
 			int ret = this->do_connect(1);
 			if (ret != 0) {
-				this->status_ = sCLOSED;
+				this->status_ = CLOSED;
 				return ret;
 			}
 		}
@@ -356,13 +372,13 @@ int Connection::disconnect()
 int Connection::do_disconnect()
 {
 	// disconnect if connected
-	if (this->status_ != sCLOSED) {
+	if (this->status_ != CLOSED) {
 		LOGI("disconnect from " << this->ip_ << ':' << this->port_);
 
 		ev_io_stop(loop_, &this->evwatcher_);
 		::close(this->sockfd_);
 		this->sockfd_ = -1;
-		this->status_ = sCLOSED;
+		this->status_ = CLOSED;
 		return 0;
 	} else {
 		return -1;
@@ -376,7 +392,7 @@ void Connection::sock_cb(struct ev_loop *loop, struct ev_io *w, int revents)
 {
 	Connection *connection = static_cast<Connection*>(w->data);
 	ScopeLock lock(&connection->mutex_);
-	if (connection->status_ == sCLOSED) {
+	if (connection->status_ == CLOSED) {
 		return;
 	}
 
@@ -388,14 +404,14 @@ void Connection::sock_cb(struct ev_loop *loop, struct ev_io *w, int revents)
 			connection->dataHandler(buf, ret);
 		} else if (ret == 0) {
 			LOGD("socket " << connection->sockfd_ << " closed by peer");
-			connection->status_ = sCONNECTING;
+			connection->status_ = CONNECTING;
 			close(connection->sockfd_);
 			break;
 		} else if (errno == EAGAIN) {
 			break;
 		} else {
 			LOGE("recv on socket " << connection->sockfd_  <<" failed: " << strerror(errno));
-			connection->status_ = sCONNECTING;
+			connection->status_ = CONNECTING;
 			close(connection->sockfd_);
 			break;
 		}
@@ -467,7 +483,7 @@ void Connection::dataHandler(const char *data, size_t len)
  */
 void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *body)
 {
-	LOGD("recieved message " << msgid);
+	LOGI("recieved message " << msgid);
 	this->latestPacketRecievedTime_ = time(NULL);
 	ev_timer_again(this->loop_, &this->evtimer_);
 
@@ -520,24 +536,39 @@ bool Connection::sendMessageOnceAndWait(int timeoutseconds, MSG_WORD msgSerial, 
  * YZ_SOCK_ERROR rarely happens, maybe memory is insufficient
  *
  */
-int Connection::sendMessageAndWait(MSG_WORD msgid, const char *content, size_t len, msg_body_t **pbody)
+int Connection::sendMessageAndWait(MSG_WORD msgid, const char *content, size_t len, msg_body_t **pbody, bool critical/* = false*/)
 {
+
+	PackedMessage *packedmsg = new PackedMessage(msgid, 0);
+	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg->packets, packedmsg->serial) == false) {
+		delete packedmsg;
+		return YZ_OUT_OF_MEM;
+	}
 	ScopeLock lock(&this->mutex_);
-	if (this->status_ != sCONNECTED_AUTHORIZED) {
+	if (this->status_ != CONNECTED_AUTHORIZED) {
+		if (critical == true) {
+			this->pendingMsgs_.push_back(packedmsg);
+		}
+		delete packedmsg;
 		return YZ_CON_CLOSED;
 	}
 
-	PackedMessage packedmsg;
-	MSG_WORD msgSerial = 0;
-	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg.packets, msgSerial) == false) {
-		return YZ_OUT_OF_MEM;
+	int ret = this->do_sendMessageAndWait(*packedmsg, pbody);
+	if (ret != 0 && critical == true) {
+		this->pendingMsgs_.push_back(packedmsg);
+	} else {
+		delete packedmsg;
 	}
+	return ret;
+}
 
+int Connection::do_sendMessageAndWait(const PackedMessage &msg, msg_body_t **pbody)
+{
 	bool retryForever = this->maxConnectRetry_ <= 0 ? true : false;
 	int retryCount = 1;
 	int interval = this->messageRetryIntervalSeconds_;
 	while (retryForever || retryCount <= this->maxConnectRetry_) {
-		if (this->sendMessageOnceAndWait(interval, msgSerial, packedmsg.packets, pbody) == true) {
+		if (this->sendMessageOnceAndWait(interval, msg.serial, msg.packets, pbody) == true) {
 			return YZ_OK;
 		} else {
 			++retryCount;
@@ -555,9 +586,8 @@ int Connection::sendMessageAndWait(MSG_WORD msgid, const char *content, size_t l
 
 void Connection::sendMessage(MSG_WORD msgid, const char *content, size_t len)
 {
-	PackedMessage packedmsg;
-	MSG_WORD msgSerial = 0;
-	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg.packets, msgSerial) == false) {
+	PackedMessage packedmsg(msgid, 0);
+	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg.packets, packedmsg.serial) == false) {
 		return;
 	}
 	for (vector<msg_serialized_message_t>::const_iterator iter = packedmsg.packets.begin();
@@ -587,7 +617,7 @@ msg_body_t *Connection::waitMessage(MSG_WORD msgSerial, int timeoutseconds)
 
 	map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.insert(pair<MSG_WORD, msg_body_t*>(msgSerial, NULL)).first;
 	int error = 0;
-	while (iter->second == NULL && this->status_ != sCLOSED && this->status_ != sCONNECTING && error != ETIMEDOUT) {
+	while (iter->second == NULL && this->status_ != CLOSED && this->status_ != CONNECTING && error != ETIMEDOUT) {
 		error = pthread_cond_timedwait(&this->cond_, &this->mutex_, &outtime);
 		iter = this->msgBuffer_.find(msgSerial);
 	}
@@ -607,10 +637,10 @@ void Connection::timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents)
 {
 	Connection *connection = static_cast<Connection*>(w->data);
 	ScopeLock lock(&connection->mutex_);
-	if (connection->status_ != sCLOSED) {
+	if (connection->status_ != CLOSED) {
 		time_t now = time(NULL);
 		if (now - connection->latestPacketRecievedTime_ > connection->heartbeatDeadCount_ * connection->heartbeatIntervalSeconds_) {
-			connection->status_ = sCONNECTING;
+			connection->status_ = CONNECTING;
 			pthread_cond_broadcast(&connection->cond_);
 		} else {
 			// send heatbeat msg
