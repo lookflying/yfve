@@ -10,13 +10,15 @@
 
 #include <string>
 #include <netinet/in.h>
-#define EV_STANDALONE 1
-#include "ev.h"
 #include <map>
 #include <set>
 
+#define EV_STANDALONE 1
+#include "ev.h"
 #include "message/message.h"
 #include "MessageTemplates.h"
+
+class PackedMessage;
 
 class Connection {
 public:
@@ -24,22 +26,17 @@ public:
 	 * connection status
 	 */
 	enum Status {
-		sCLOSED,
-		sCONNECTING,
-		sCONNECTED,
-		sCONNECTED_AUTHORIZING,
-		sCONNECTED_AUTHORIZED
+		CLOSED,
+		CONNECTING,
+		CONNECTED,
+		CONNECTED_AUTHORIZING,
+		CONNECTED_AUTHORIZED
 	};
 
 	typedef void (*closedHandler_t)(const Connection &conn);
 	typedef bool (*messageHandler_t)(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial, const msg_body_t &msg, MSG_WORD *responseMsgid, std::string *response);
 
-	Connection(const std::string &name, struct ev_loop *loop,
-			   int messageRetryIntervalSeconds = DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS,
-			   int connectRetryIntervalSeconds = DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS,
-			   int maxConnectRetry = 3,
-			   int heartbeatInterval = DEFAULT_HEARTBEAT_ITNERVAL_SECONDS,
-			   int heartbeatDeadCount = 3);
+	Connection();
 	~Connection();
 
 	/**
@@ -69,17 +66,6 @@ public:
 	 */
 	int connectAndAuthorize();
 
-
-	/**
-	 * send authorize message to server and wait response
-	 * return YZ_OK on success
-	 * return YZ_DUP_LOGIN if already logged in
-	 * return YZ_LOGIN_FAIL if failed to login
-	 * return YZ_CON_TIMEOUT if fail to connect
-	 * return YZ_SOCK_ERROR, unlikely, such as memory insufficient
-	 */
-	int do_connectAndAuthorize();
-
 	/**
 	 * register terminal
 	 */
@@ -107,12 +93,28 @@ public:
 	 * YZ_SOCK_ERROR rarely happens, maybe memory is insufficient
 	 *
 	 */
-	int sendMessageAndWait(MSG_WORD msgid, const char *content, size_t len, msg_body_t **pmsg);
+	int sendMessageAndWait(MSG_WORD msgid, const char *content, size_t len, msg_body_t **pbody, bool critical = false);
+
+	int do_sendMessageAndWait(const PackedMessage &msg, msg_body_t **pbody);
 
 	/**
 	 * name of the connection
 	 */
 	const std::string &name()const { return this->name_; }
+
+	void set_name(const std::string &value) { this->name_ = value; }
+
+	void set_loop(struct ev_loop *value) { this->loop_ = value; }
+
+	void set_messageRetryIntervalSeconds(int value) { this->messageRetryIntervalSeconds_ = value; }
+
+	void set_connectRetryIntervalSeconds(int value) { this->connectRetryIntervalSeconds_ = value; }
+
+	void set_maxConnectRetry(int value) { this->maxConnectRetry_ = value; }
+
+	void set_heartbeatIntervalSeconds(int value) { this->heartbeatIntervalSeconds_ = value; }
+
+	void set_heartbeanDeadCount(int value) { this->heartbeatDeadCount_ = value; }
 
 	/**
 	 * destination ip of the connection
@@ -173,6 +175,16 @@ private:
 	int do_disconnect();
 
 	/**
+	 * send authorize message to server and wait response
+	 * return YZ_OK on success
+	 * return YZ_DUP_LOGIN if already logged in
+	 * return YZ_LOGIN_FAIL if failed to login
+	 * return YZ_CON_TIMEOUT if fail to connect
+	 * return YZ_SOCK_ERROR, unlikely, such as memory insufficient
+	 */
+	int do_connectAndAuthorize();
+
+	/**
 	 * wait message, return pointer on success
 	 * or NULL if connection closed
 	 */
@@ -218,7 +230,7 @@ private:
 	int sockfd_;
 	struct ev_io evwatcher_;
 	struct ev_timer evtimer_;
-	struct ev_loop *const loop_;
+	struct ev_loop * loop_;
 	closedHandler_t closedHandler_;
 	messageHandler_t messageHandler_;
 	int messageRetryIntervalSeconds_;
@@ -232,6 +244,7 @@ private:
 	int latestPacketRecievedTime_;
 	int heartbeatIntervalSeconds_;
 	int heartbeatDeadCount_;
+	std::vector<PackedMessage*> pendingMsgs_;
 
 	static const int DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS;
 	static const int DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS;
