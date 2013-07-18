@@ -148,7 +148,7 @@ bool deserialize(const msg_serialized_message_t &serialized, msg_message_t &mess
  *encrypt 消息的加密类型（取低3位，格式定义如消息体属性格式结构的10到12位
  *msg_len 消息的长度
  *packed 封装后的消息（动态申请内存，使用后需要清理）
- *packed_seq 封装后的消息对应的流水号
+ *msg_seq 封装后的消息对应的流水号
  *返回值，成功封装返回true，失败返回false
  * */
 bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encrypt, const unsigned int msg_len, std::vector<msg_serialized_message_t> &packed, MSG_WORD &msg_seq);
@@ -158,6 +158,7 @@ bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encry
  *利用全局缓存，每次接受一个反序列化后的消息，若与缓存中的消息组合能够成功解包，则返回true，并将消息内容拷贝至msg_data（动态申请内存，使用后需要清理）
  *msg 当前输入的消息
  *msg_id 解包成功后，获得的消息的消息ID
+ *msg_seq 解包成功后，获得的消息的流水号
  *msg_data 指向消息数据的指针
  *len 消息的长度
  *返回值，成功解包返回true，尚未能够成功解包或者解包失败返回false
