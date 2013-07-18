@@ -5,7 +5,7 @@
  *  Author: ushrimp
  */
 
-#include "Connection.h"
+
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -29,6 +29,9 @@
 #include "log4z.h"
 #include "ScopeLock.h"
 #include "YzHelper.h"
+
+#define EV_STANDALONE 1
+#include "ev.c"
 
 using namespace std;
 

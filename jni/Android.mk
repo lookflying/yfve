@@ -5,6 +5,7 @@ LOCAL_CXXFLAGS := -DHAVE_PTHREADS
 LOCAL_SRC_FILES := YzJni.cpp	\
 					message/message.cpp \
 					log4z.cpp \
-					YzHelper.cpp
+					YzHelper.cpp \
+					Connection.cpp
 									
 include $(BUILD_SHARED_LIBRARY)

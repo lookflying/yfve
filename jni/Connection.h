@@ -10,7 +10,8 @@
 
 #include <string>
 #include <netinet/in.h>
-#include <ev.h>
+#define EV_STANDALONE 1
+#include "ev.h"
 #include <map>
 #include <set>
 
