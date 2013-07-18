@@ -121,7 +121,7 @@ extern MSG_WORD msg_g_msg_seq;
  *serialized 序列化后的消息
  *返回值，序列化成功返回true，失败返回false
  */
-bool serialize(msg_message_t message, msg_serialized_message_t &serialized);
+bool serialize(const msg_message_t &message, msg_serialized_message_t &serialized);
 
 /*
  *反序列化消息（主要对外接口）
@@ -151,7 +151,7 @@ bool deserialize(const msg_serialized_message_t &serialized, msg_message_t &mess
  *packed_seq 封装后的消息对应的流水号
  *返回值，成功封装返回true，失败返回false
  * */
-bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encrypt, const unsigned int msg_len, std::vector<msg_serialized_message_t> &packed, std::vector<MSG_WORD> &packed_seq);
+bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encrypt, const unsigned int msg_len, std::vector<msg_serialized_message_t> &packed, MSG_WORD &msg_seq);
 
 /*
  *解包消息（主要对外接口）

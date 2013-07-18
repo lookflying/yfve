@@ -106,7 +106,7 @@ MSG_BYTE checksum(string str){
 	return chksum;
 }
 /*根据header和body内容生成校验码, 并序列化*/
-bool serialize(msg_message_t message, msg_serialized_message_t &serialized){
+bool serialize(const msg_message_t &message, msg_serialized_message_t &serialized){
 	string serialize_buf = "";
 	string escaped_serialize_buf = "";
 	serialize_buf += header2string(message.header);
@@ -260,9 +260,8 @@ msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq){
 }
 
 
-bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encrypt, const unsigned int msg_len, vector<msg_serialized_message_t> &packed, vector<MSG_WORD> &packed_seq){
+bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encrypt, const unsigned int msg_len, vector<msg_serialized_message_t> &packed, MSG_WORD &msg_seq){
 	packed.resize(0);
-	packed_seq.resize(0);
 	if ((MSG_MAX_PACK_SIZE == 0 || msg_len <= (unsigned int)MSG_MAX_PACK_SIZE) && msg_len <= (unsigned int)MSG_PACK_SIZE_LIMIT){
 		MSG_WORD property = MSG_PACK_PROPERTY(false, encrypt, msg_len);
 		msg_message_t temp_msg;
@@ -271,8 +270,8 @@ bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encry
 		temp_msg.body.content = (MSG_BYTE*) msg_data;
 		temp_msg.body.length = msg_len;
 		if (serialize(temp_msg, serialized_msg)){
-			packed.push_back(serialized_msg);
-			packed_seq.push_back(msg_g_msg_seq++);
+			msg_seq = msg_g_msg_seq;
+			msg_g_msg_seq++;			
 			return true;
 		}else{
 			return false;
@@ -303,14 +302,12 @@ bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encry
 			temp_msg.header = generate_header(id, property, msg_g_phone_num, msg_g_msg_seq, generate_pack_option(count, seq + 1));
 			temp_msg.body.content = (MSG_BYTE*) (msg_data + (seq * divided_size));
 			temp_msg.body.length = cur_size;
-			if (serialize(temp_msg, serialized_msg)){
-				packed.push_back(serialized_msg);
-				packed_seq.push_back(msg_g_msg_seq++);	
-				++seq;
-			}else{
+			if (!serialize(temp_msg, serialized_msg)){
 				return false;
 			}
 		}
+		msg_seq = msg_g_msg_seq;
+		msg_g_msg_seq++;			
 		return true;
 	}	
 }

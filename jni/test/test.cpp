@@ -91,13 +91,13 @@ TEST(pack_test, serialize_header){
 TEST(pack_test, small_sample){
 	char data[] = {0x30, 0x7e, 0x08, 0x7d, 0x55};
 	vector<msg_serialized_message_t> sample;
-	vector<MSG_WORD> packed_seq;
+	MSG_WORD msg_seq;
 	msg_message_t message;
 	char* unpacked;
 	unsigned int len;
 	MSG_WORD id;
 	print_hex(data, sizeof(data));
-	EXPECT_TRUE(pack_msg(0x0001, &data[0], 0x0000, sizeof(data), sample, packed_seq));
+	EXPECT_TRUE(pack_msg(0x0001, &data[0], 0x0000, sizeof(data), sample, msg_seq));
 	EXPECT_TRUE(deserialize(sample[0], message));
 	EXPECT_TRUE(unpack_msg(message, id, &unpacked, len));
 	EXPECT_EQ(sizeof(data), len);
@@ -114,10 +114,10 @@ TEST(pack_test, pack_unpack_message){
 	char* large_msg = new (nothrow) char[large_size];
 	ASSERT_TRUE(large_msg != NULL);
 	vector<msg_serialized_message_t> small, large;
-	vector<MSG_WORD> packed_seq;
+	MSG_WORD small_msg_seq, large_msg_seq;
 	set_global_max_pack_size(0);
-	EXPECT_TRUE(pack_msg(0x0001, small_msg, 0x0000, small_size, small, packed_seq));
-	EXPECT_TRUE(pack_msg(0x0002, large_msg, 0x0007, large_size, large, packed_seq));
+	EXPECT_TRUE(pack_msg(0x0001, small_msg, 0x0000, small_size, small, small_msg_seq));
+	EXPECT_TRUE(pack_msg(0x0002, large_msg, 0x0007, large_size, large, large_msg_seq));
 	EXPECT_EQ((small_size + 0x3ff - 1) / 0x3ff, small.size());
 	EXPECT_EQ((large_size + 0x3ff - 1) / 0x3ff, large.size());
 	char * unpacked;
