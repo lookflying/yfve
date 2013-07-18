@@ -12,8 +12,7 @@
 #include <errno.h>
 #include <string.h>
 
-#define EV_STANDALONE 1
-#include "ev.c"
+#include <ev.h>
 
 #include "log4z.h"
 using namespace zsummer::log4z;
@@ -41,9 +40,9 @@ int main(int argc, char **argv)
 	struct ev_loop *loop = ev_default_loop();
 	Connection conn("test connection", loop);
 	conn.initServerAddr(argv[1], atoi(argv[2]));
-	conn.setClosedHandler(closedHandler);
-	conn.setDataHandler(testHandler);
-	conn.connect();
+//	conn.setClosedHandler(closedHandler);
+//	conn.setDataHandler(testHandler);
+//	conn.connect();
 
 	ev_loop(loop, 0);
 	return 0;
