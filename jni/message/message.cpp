@@ -179,7 +179,7 @@ bool deserialize_header(string &str, msg_header_t &header){
 	}
 	return true;
 }
-bool deserialize(msg_serialized_message_t serialized, msg_message_t &message){
+bool deserialize(const msg_serialized_message_t &serialized, msg_message_t &message){
 	string deserialize_buf = "";
 	string unescaped_deserialize_buf = "";
 	if ((char)MSG_FLAG == (char)(*serialized.data) && (char)MSG_FLAG == (char)(*(serialized.data + serialized.length - 1))){
@@ -260,7 +260,7 @@ msg_pack_opt_t generate_pack_option(MSG_WORD pack_count, MSG_WORD pack_seq){
 }
 
 
-bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, vector<msg_serialized_message_t> &packed, vector<MSG_WORD> &packed_seq){
+bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encrypt, const unsigned int msg_len, vector<msg_serialized_message_t> &packed, vector<MSG_WORD> &packed_seq){
 	packed.resize(0);
 	packed_seq.resize(0);
 	if ((MSG_MAX_PACK_SIZE == 0 || msg_len <= (unsigned int)MSG_MAX_PACK_SIZE) && msg_len <= (unsigned int)MSG_PACK_SIZE_LIMIT){
@@ -315,7 +315,7 @@ bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int m
 	}	
 }
 
-bool unpack_msg(msg_message_t msg, MSG_WORD &msg_id, char** msg_data, unsigned int &msg_len){
+bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, char** msg_data, unsigned int &msg_len){
 	msg_len = 0;
 	if (MSG_IS_DIVIDED(msg.header.property)){
 		if (msg_g_unpack_count == 0

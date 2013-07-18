@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "../message/message.h"
-#include "../YzJni.h"
 #include <string>
 #include <cstring>
 #include <cstdlib>

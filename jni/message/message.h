@@ -129,7 +129,7 @@ bool serialize(msg_message_t message, msg_serialized_message_t &serialized);
  *message 序列化后的消息（动态申请内存，使用后需清理）
  *返回值，反序列化成功返回true，失败返回false
  */
-bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
+bool deserialize(const msg_serialized_message_t &serialized, msg_message_t &message);
 
 /*
  *设置全局sim卡电话号码，接受char数组，每个字节表示一位号码，按字节序，长度不满12位，自动在前面补零，超过12位，只取前12位
@@ -151,7 +151,7 @@ bool deserialize(msg_serialized_message_t serialized, msg_message_t &message);
  *packed_seq 封装后的消息对应的流水号
  *返回值，成功封装返回true，失败返回false
  * */
-bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int msg_len, std::vector<msg_serialized_message_t> &packed, std::vector<MSG_WORD> &packed_seq);
+bool pack_msg(const MSG_WORD id, const char* msg_data, const unsigned char encrypt, const unsigned int msg_len, std::vector<msg_serialized_message_t> &packed, std::vector<MSG_WORD> &packed_seq);
 
 /*
  *解包消息（主要对外接口）
@@ -162,7 +162,7 @@ bool pack_msg(MSG_WORD id, char* msg_data, unsigned char encrypt, unsigned int m
  *len 消息的长度
  *返回值，成功解包返回true，尚未能够成功解包或者解包失败返回false
  */
-bool unpack_msg(msg_message_t msg, MSG_WORD &msg_id, char** msg_data, unsigned int &len);
+bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, char** msg_data, unsigned int &len);
 
 /*
  *清理消息体
