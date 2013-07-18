@@ -61,8 +61,10 @@ string big_endian(MSG_WORD word){
 
 string big_endian(MSG_DWORD dword){
 	string str = "";
-	str += big_endian(HWORD(dword));
-	str += big_endian(LWORD(dword));
+	str += (char)HBYTE((HWORD(dword)));
+	str += (char)LBYTE((HWORD(dword)));
+	str += (char)HBYTE((LWORD(dword)));
+	str += (char)LBYTE((LWORD(dword)));
 	return str;
 }
 

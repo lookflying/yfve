@@ -12,6 +12,30 @@ TEST(macro_test, high_low_byte){
 
 }
 
+TEST(macro_test, high_low_word){
+	MSG_DWORD dword = 0x12345678;
+	EXPECT_EQ(0x1234, HWORD(dword));
+	EXPECT_EQ(0x5678, LWORD(dword));
+	EXPECT_EQ(0x12, HBYTE(HWORD(dword)));
+	EXPECT_EQ(0x34, LBYTE(HWORD(dword)));
+	EXPECT_EQ(0x56, HBYTE(LWORD(dword)));
+	EXPECT_EQ(0x78, LBYTE(LWORD(dword)));
+}
+
+TEST(macro_test, big_endian){
+	MSG_DWORD dword = 0x87654321;
+	MSG_WORD	word = 0x1234;
+	string be_word = big_endian(word);
+	EXPECT_EQ(0x12, be_word.c_str()[0]);
+	EXPECT_EQ(0x34, be_word.c_str()[1]);
+	string be_dword = big_endian(dword);
+	EXPECT_EQ((char)0x87, be_dword.c_str()[0]);
+	EXPECT_EQ((char)0x65, be_dword.c_str()[1]);
+	EXPECT_EQ((char)0x43, be_dword.c_str()[2]);
+	EXPECT_EQ((char)0x21, be_dword.c_str()[3]);
+
+}
+
 extern void escape(string str, string& escaped);
 extern  void unescape(string str, string &unescaped);
 void print_hex(const char* array, unsigned int size){
