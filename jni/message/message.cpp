@@ -332,12 +332,12 @@ bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, MSG_WORD &msg_seq, c
 		map<MSG_WORD, map<MSG_WORD, msg_message_t> >::iterator it;
 		map<MSG_WORD, msg_message_t>::iterator msg_it;
 		if ((it = msg_g_unpack_cache.find(msg.header.seq)) != msg_g_unpack_cache.end()){
-						if (msg_g_unpack_id[msg.header.seq] != msg.header.id
-								||msg_g_unpack_count[msg.header.seq] != msg.header.pack_opt.pack_count){
-							clear_unpack_cache(msg.header.seq);							
-							msg_g_unpack_id[msg.header.seq] = msg.header.id;
-							msg_g_unpack_count[msg.header.seq] = msg.header.pack_opt.pack_count;
-						}
+			if (msg_g_unpack_id[msg.header.seq] != msg.header.id
+					||msg_g_unpack_count[msg.header.seq] != msg.header.pack_opt.pack_count){
+					clear_unpack_cache(msg.header.seq);		
+					msg_g_unpack_id[msg.header.seq] = msg.header.id;
+					msg_g_unpack_count[msg.header.seq] = msg.header.pack_opt.pack_count;
+			}
 		}else{
 			msg_g_unpack_cache[msg.header.seq] = map<MSG_WORD, msg_message_t>();
 			it = msg_g_unpack_cache.find(msg.header.seq);
