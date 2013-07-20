@@ -53,10 +53,6 @@
 #define YZMSGID_ASK_RESPONSE					0X0302
 
 
-/**
- * init the middleware
- */
-void initMiddleware(const std::string server_ip, const int server_port);
 
 /**
  * printf to logcat
@@ -77,5 +73,28 @@ jstring string2jstring(JNIEnv* env, const std::string str);
  */
 msg_body_t string2msg_body(std::string content);
 
+/**
+ * 将字符串复制到指定长度得buf中，字符串长度不足时，自动补0
+ */
 void string2bytes(const std::string str, MSG_BYTE* target, unsigned int len);
+
+/**
+ * 序列化LocationStruct至string
+ */
+std::string locationStruct2string(JNIEnv* env, jobject loc);
+
+/**
+ *序列化VehicleDataStruct至string
+ */
+std::string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data);
+
+/**
+ *获取对象int型字段
+ */
+jint getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field);
+/**
+ *获取对象long型字段
+
+ */
+jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field);
 #endif /* YZERR_H_ */

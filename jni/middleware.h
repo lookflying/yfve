@@ -14,6 +14,9 @@
 
 extern ConnectionManager g_conn_manager;
 
+/**
+ * 初始化中间件
+ */
 void initMiddleware(const std::string server_ip, const int server_port);
 
 

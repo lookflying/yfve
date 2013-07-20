@@ -110,7 +110,7 @@ public class YZ_VehicleTransit_CVS {
 	 * 车况信息上传 函数类型：同步函数
 	 * 
 	 * @param simcardnum
-	 *            卡对应的电话号码
+	 *            卡对应的电话号码（忽略）
 	 * @param vehicledata
 	 *            车辆信息
 	 * @return 获取结果，0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误，则返回最新的一个错误值
