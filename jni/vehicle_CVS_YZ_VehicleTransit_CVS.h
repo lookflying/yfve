@@ -49,14 +49,6 @@ JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_13_1getweath
 
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
- * Method:    yz_3_weathercallback
- * Signature: (Lvehicle_CVS/WeatherStruct_DSP;)V
- */
-JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_13_1weathercallback
-  (JNIEnv *, jclass, jobject);
-
-/*
- * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
  * Method:    yz_3_getweather
  * Signature: (Ljava/lang/String;Ljava/lang/String;ILvehicle_CVS/WeatherStruct_DSP;)I
  */

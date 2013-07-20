@@ -1,6 +1,7 @@
 #include <jni.h>
 #include "vehicle_CVS_YZ_VehicleTransit_CVS.h"
 #include "YzHelper.h"
+#include "middleware.h"
 #include "message/message.h"
 #include <ctime>
 #include <stdlib.h>
@@ -83,11 +84,11 @@ using namespace std;
 	upload_altitude = static_cast<MSG_WORD>(altitude);
 	//get speed
 	jfieldID speed_id = env->GetFieldID(loc_cls, "speed", "F");
-	jfloat speed = env->GetFloatField(loc_cls, speed_id);
+	jfloat speed = env->GetFloatField(cur_loc, speed_id);
 	upload_speed = static_cast<MSG_WORD>(speed);
 	//get direction
 	jfieldID direction_id = env->GetFieldID(loc_cls, "direction", "F");
-	jfloat direction = env->GetFloatField(cls, direction_id);
+	jfloat direction = env->GetFloatField(cur_loc, direction_id);
 	upload_direction = static_cast<MSG_WORD>(direction);
 	//get time
 	jfieldID time_id = env->GetFieldID(loc_cls, "time", "J");
@@ -185,27 +186,36 @@ using namespace std;
 	return YZ_OK;
 }
 
-/*
- * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
- * Method:    yz_2_init
- * Signature: (Ljava/lang/String;Ljava/lang/String;ILvehicle_CVS/VehicleTransitListen_DSP;)V
- */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILvehicle_1CVS_VehicleTransitListen_1DSP_2(
-		JNIEnv * env, jclass cls, jstring, jstring, jint, jobject);
+ /*
+  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
+  * Method:    yz_2_init
+  * Signature: (Ljava/lang/String;Ljava/lang/String;ILvehicle_CVS/VehicleTransitListen_DSP;)V
+  */
+ JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILvehicle_1CVS_VehicleTransitListen_1DSP_2
+   (JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp, jint cvsPort, jobject vehicleTransitListen){
+	 string ip = jstring2string(env, cvsIp);
+	 initMiddleware(ip, cvsPort);
+ }
 
-/*
- * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
- * Method:    yz_2_init
- * Signature: (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ILjava/lang/String;Lvehicle_CVS/VehicleTransitListen_DSP;)V
- */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILjava_lang_String_2ILjava_lang_String_2Lvehicle_1CVS_VehicleTransitListen_1DSP_2(
-		JNIEnv * env, jclass cls, jstring, jstring, jint, jstring, jint,
-		jstring, jobject);
+ /*
+  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
+  * Method:    yz_2_init
+  * Signature: (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ILjava/lang/String;Lvehicle_CVS/VehicleTransitListen_DSP;)V
+  */
+ JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILjava_lang_String_2ILjava_lang_String_2Lvehicle_1CVS_VehicleTransitListen_1DSP_2
+   (JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp, jint cvsPort, jstring, jint, jstring, jobject){
+
+ }
+
 
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
  * Method:    yz_2_destroy
  * Signature: ()V
  */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1destroy(
-		JNIEnv *, jclass);
+		JNIEnv *, jclass){
+
+ }
 
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
@@ -236,7 +246,14 @@ using namespace std;
 	msg.color = (MSG_BYTE) plateColor;
 	msg.carPlate = jstring2string(env, plateNum);
 	Connection &conn = *g_conn_manager.getConnection(0);
-	int ret = conn.registerTerminal(msg);
+
+	int ret = conn.connect();
+	logcatf("connect return %d\n", ret);
+	if (ret != 0){
+		return ret;
+	}
+	ret = conn.registerTerminal(msg);
+	logcatf("register return %d\n", ret);
 	return ret;
 }
 /*

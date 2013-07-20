@@ -36,8 +36,8 @@
 #define YZMSGID_TERMINAL_HEARTBEAT			0X0002
 #define YZMSGID_TERMINAL_REGISTER				0X0100
 #define YZMSGID_TERMINAL_REGISTER_RESPONSE	0X8100
-#define YZMSGID_TERMINAL_LOGOUT				0X0003
-#define YZMSGID_TERMINAL_AUTHORIZE			0X0102
+#define YZMSGID_TERMINAL_DEREGISTER				0X0101
+#define YZMSGID_TERMINAL_AUTHORIZE			0x0102
 #define YZMSGID_SET_TERMINAL_PARAMETER		0X8103
 #define YZMSGID_QUERY_TERMIAL_PARATETER		0X8104
 #define YZMSGID_QUERY_TERMIAL_PARATETER_RESPONSE	0X0104
@@ -53,12 +53,10 @@
 #define YZMSGID_ASK_RESPONSE					0X0302
 
 
-extern ConnectionManager g_conn_manager;
-
 /**
  * init the middleware
  */
-void initYzService(const std::string server_ip, const int server_port);
+void initMiddleware(const std::string server_ip, const int server_port);
 
 /**
  * printf to logcat
