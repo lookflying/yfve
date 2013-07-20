@@ -6,7 +6,7 @@
  */
 
 #include <string.h>
-
+#include <unistd.h>
 #include "ConnectionManager.h"
 #include "log4z.h"
 

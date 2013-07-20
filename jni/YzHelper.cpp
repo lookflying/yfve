@@ -1,84 +1,84 @@
 #include "YzHelper.h"
-#include "Connection.h"
 #include <unistd.h>
 #include <cstring>
 #include <android/log.h>
 #define EV_STANDALONE 1
 #include "ev.h"
 using namespace std;
-//helper
-string jstring2string(JNIEnv* env, jstring jstr){
-	char* temp = NULL;
+
+/**
+ * logcat buffer
+ */
+char logcat_buf[1024];
+
+/**
+ * printf to logcat
+ */
+void logcatf(const char* fmt, ...) {
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(logcat_buf, sizeof(logcat_buf), fmt, args);
+	va_end(args);
+	__android_log_write(ANDROID_LOG_DEBUG, "logcatf", logcat_buf);
+}
+
+/**
+ * jstring to string
+ */
+string jstring2string(JNIEnv* env, jstring jstr) {
+	const char *cptr = env->GetStringUTFChars(jstr, 0);
+	jsize len = env->GetStringUTFLength(jstr);
 	string str = "";
-	jclass clsstring = env->FindClass("java/lang/String");
-	jstring strencode = env->NewStringUTF("utf-8");
-	jmethodID mid = env->GetMethodID(clsstring, "getBytes", "(Ljava/lang/String;)[B");
-	jbyteArray barr= (jbyteArray)env->CallObjectMethod(jstr, mid, strencode);
-	jsize alen = env->GetArrayLength(barr);
-	jbyte* ba = env->GetByteArrayElements(barr, NULL);
-	if (alen > 0){
-		temp = new (nothrow) char[alen];
-		memcpy(temp, ba, alen);
-	}
-	str.append(temp, alen);
-	delete[] temp;
-	env->ReleaseByteArrayElements(barr, ba, 0);
+	str.append(cptr, len);
+	env->ReleaseStringUTFChars(jstr, cptr);
 	return str;
 }
 
-//char* to jstring
-jstring string2jstring(JNIEnv* env, const string str){
-	jclass strClass = env->FindClass("Ljava/lang/String;");
-	jmethodID ctorID = env->GetMethodID(strClass, "<init>", "([BLjava/lang/String;)V");
+/**
+ * string to jstring
+ */
+jstring string2jstring(JNIEnv* env, const string str) {
+	jclass strClass = env->FindClass("java/lang/String");
+	jmethodID ctorID = env->GetMethodID(strClass, "<init>",
+			"([BLjava/lang/String;)V");
 	jbyteArray bytes = env->NewByteArray(str.size());
-	env->SetByteArrayRegion(bytes, 0, str.size(), (jbyte*)&str.c_str()[0]);
+	env->SetByteArrayRegion(bytes, 0, str.size(), (jbyte*) &str.c_str()[0]);
 	jstring encoding = env->NewStringUTF("utf-8");
-	return (jstring)env->NewObject(strClass, ctorID, bytes, encoding);
-}
-
-void testHandler(const Connection *conn, const char *buf, int len)
-{
-}
-
-void closedHandler(const Connection &conn)
-{
-}
-
-void *worker(void *param)
-{
-	struct ev_loop *loop = static_cast<struct ev_loop*>(param);
-	ev_loop(loop, 0);
-	return NULL;
-}
-
-void idle_cb(struct ev_loop *loop, struct ev_idle *w, int revents)
-{
-	sleep(1);
+	return (jstring) env->NewObject(strClass, ctorID, bytes, encoding);
 }
 
 
-jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-	struct ev_loop *loop = ev_default_loop(0);
-	struct ev_idle *idle_watcher = (ev_idle*) (malloc(sizeof(struct ev_idle)));
-	ev_idle_init(idle_watcher, idle_cb);
-	ev_idle_start(loop, idle_watcher);
+msg_body_t string2msg_body(std::string content){
+	msg_body_t body;
+	body.content = (MSG_BYTE*)&content.c_str()[0];
+	body.length = content.size();
+	return body;
+}
+void string2bytes(const std::string str, MSG_BYTE* target, unsigned int len){
+	if (str.size() >= len){
+		memcpy(target, str.c_str(), len);
+	}else{
+		memcpy(target, str.c_str(), str.size());
+		memset(target + str.size(), 0, len - str.size());
+	}
+}
+ConnectionManager g_conn_manager;
 
-	MSG_WORD platformResponseMsgIds[] = {YZMSGID_GENERAL_PLATFORM_RESPONSE, YZMSGID_TERMINAL_REGISTER_RESPONSE};
-	Connection::responseMsgIdSet.insert(platformResponseMsgIds, platformResponseMsgIds + sizeof(platformResponseMsgIds) / sizeof(platformResponseMsgIds[0]));
+bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
+		const msg_body_t &msg, MSG_WORD *responseMsgid, string *response) {
+	return false;
+}
 
-	Connection conn("test connection", loop);
-	conn.initServerAddr("121.101.223.68", 6973);
-	conn.setAuthorizationCode("12345");
-	conn.setClosedHandler(closedHandler);
-
-	pthread_t tid;
-	pthread_create(&tid, NULL, worker, loop);
-	sleep(1);
-	__android_log_print(ANDROID_LOG_DEBUG, "LOG_TAG", "\n hello world, form onload\n");
-	return JNI_VERSION_1_6;
+void connClosedHandler(const Connection &conn){
 
 }
 
-void JNI_OnUnload(JavaVM *vm, void *reserved) {
+void initYzService(const std::string server_ip, const int server_port) {
+	(void) g_conn_manager.start();
+	Connection &g_connection = *g_conn_manager.getConnection(0);
+	g_connection.initServerAddr(server_ip, server_port);
+	g_connection.setMessageHandler(messageHandler);
+	g_connection.setClosedHandler(connClosedHandler);
 
 }
+

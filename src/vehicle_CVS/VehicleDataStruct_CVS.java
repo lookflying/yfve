@@ -1,3 +1,4 @@
+package vehicle_CVS;
 
 public class VehicleDataStruct_CVS {
 	int rotationSpeed;	//转速，单位（rpm）	

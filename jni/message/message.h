@@ -183,4 +183,5 @@ std::string big_endian(MSG_WORD word);
  * 将DWORD转换为大端字符流
  */
 std::string big_endian(MSG_DWORD dword);
+
 #endif

@@ -1,7 +1,8 @@
+package vehicle_CVS;
 import java.util.List;
 
 
-public class WeatherSturt_DSP {
+public class WeatherStruct_DSP {
 	Long releaseTime;	//发布时间
 	double longitude;	//经度
 	double latitude;	//维度

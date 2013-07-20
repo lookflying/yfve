@@ -1,3 +1,4 @@
+package vehicle_CVS;
 
 public class WeatherBrief {
 	String condition;	//天气情况

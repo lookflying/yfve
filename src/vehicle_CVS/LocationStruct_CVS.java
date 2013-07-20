@@ -1,4 +1,5 @@
-public class LocationSturt_CVS {
+package vehicle_CVS;
+public class LocationStruct_CVS {
 	long time;// 单位 毫秒
 	double longitude;// 经度,单位：度
 	double latitude;// 纬度，单位：度

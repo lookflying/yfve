@@ -1,3 +1,4 @@
+package vehicle_CVS;
 
 public class TMCStruct_DSP {
 	int msgId;	//消息编号

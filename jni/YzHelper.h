@@ -6,6 +6,11 @@
  */
 #include <jni.h>
 #include <string>
+
+#include "message/message.h"
+#include "Connection.h"
+#include "ConnectionManager.h"
+
 #ifndef YZERR_H_
 #define YZERR_H_
 
@@ -37,7 +42,7 @@
 #define YZMSGID_QUERY_TERMIAL_PARATETER		0X8104
 #define YZMSGID_QUERY_TERMIAL_PARATETER_RESPONSE	0X0104
 #define YZMSGID_TERMINAL_CONTROL				0X8105
-#define YZMSGID_POSITION_REPORT				0X0200
+#define YZMSGID_POSITION_REPORT				0X0200//位置信息汇报
 #define YZMSGID_POSISION_QUERY				0X8201
 #define YZMSGID_POSISION_QUERY_RESPONSE		0X0201
 #define YZMSGID_TMP_POSITION_CONTROL			0X8202
@@ -48,6 +53,31 @@
 #define YZMSGID_ASK_RESPONSE					0X0302
 
 
+extern ConnectionManager g_conn_manager;
+
+/**
+ * init the middleware
+ */
+void initYzService(const std::string server_ip, const int server_port);
+
+/**
+ * printf to logcat
+ */
+void logcatf(const char* fmt, ...);
+/**
+ * jstring to string
+ */
 std::string jstring2string(JNIEnv* env, jstring jstr);
+/**
+ * string to jstring
+ */
 jstring string2jstring(JNIEnv* env, const std::string str);
+
+
+/**
+ * 将string中的内容封装为msg_body_t, 不进行内存拷贝
+ */
+msg_body_t string2msg_body(std::string content);
+
+void string2bytes(const std::string str, MSG_BYTE* target, unsigned int len);
 #endif /* YZERR_H_ */

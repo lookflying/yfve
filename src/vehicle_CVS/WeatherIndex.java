@@ -1,3 +1,4 @@
+package vehicle_CVS;
 
 public class WeatherIndex {
 	String IndexCode;	//指数编码

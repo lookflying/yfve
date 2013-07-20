@@ -1,3 +1,4 @@
+package vehicle_CVS;
 
 public class POIStruct_DSP {
 	float latitude;	//经度
