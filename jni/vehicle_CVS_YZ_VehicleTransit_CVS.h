@@ -122,9 +122,9 @@ JNIEXPORT jstring JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1getAu
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
  * Method:    yz_2_deregister
- * Signature: ()V
+ * Signature: ()I
  */
-JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1deregister
+JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1deregister
   (JNIEnv *, jclass);
 
 #ifdef __cplusplus

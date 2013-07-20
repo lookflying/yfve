@@ -23,9 +23,9 @@ void connClosedHandler(const Connection &conn) {
 
 void initMiddleware(const std::string server_ip, const int server_port) {
 	MSG_WORD platformResponseMsgIds[] = { YZMSGID_GENERAL_PLATFORM_RESPONSE,
-			YZMSGID_TERMINAL_REGISTER_RESPONSE ,
-			YZMSGID_POSITION_REPORT,
-	};
+			YZMSGID_TERMINAL_REGISTER_RESPONSE,
+
+			};
 	Connection::responseMsgIdSet.insert(platformResponseMsgIds,
 			platformResponseMsgIds
 					+ sizeof(platformResponseMsgIds)

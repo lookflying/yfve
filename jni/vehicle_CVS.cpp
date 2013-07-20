@@ -28,8 +28,8 @@ using namespace std;
  * Signature: (Ljava/lang/String;Ljava/lang/String;)I
  */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1userlogout(
 		JNIEnv * env, jclass cls, jstring, jstring) {
-	 Connection &conn = *g_conn_manager.getConnection(0);
-	 int ret = conn.disconnect();
+	Connection &conn = *g_conn_manager.getConnection(0);
+	int ret = conn.disconnect();
 	return ret;
 }
 
@@ -136,7 +136,8 @@ using namespace std;
 	Connection &conn = *g_conn_manager.getConnection(0);
 	int ret = conn.sendMessageAndWait(YZMSGID_POSITION_REPORT, message.c_str(),
 			message.length(), &response, false);
-
+	if (ret == 0)
+		delete[] (*response).content;
 	return ret;
 }
 
@@ -157,7 +158,6 @@ using namespace std;
 		JNIEnv * env, jclass cls, jstring, jdouble, jdouble, jint, jobject) {
 	return YZ_OK;
 }
-
 
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
@@ -186,36 +186,35 @@ using namespace std;
 	return YZ_OK;
 }
 
- /*
-  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
-  * Method:    yz_2_init
-  * Signature: (Ljava/lang/String;Ljava/lang/String;ILvehicle_CVS/VehicleTransitListen_DSP;)V
-  */
- JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILvehicle_1CVS_VehicleTransitListen_1DSP_2
-   (JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp, jint cvsPort, jobject vehicleTransitListen){
-	 string ip = jstring2string(env, cvsIp);
-	 initMiddleware(ip, cvsPort);
- }
+/*
+ * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
+ * Method:    yz_2_init
+ * Signature: (Ljava/lang/String;Ljava/lang/String;ILvehicle_CVS/VehicleTransitListen_DSP;)V
+ */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILvehicle_1CVS_VehicleTransitListen_1DSP_2(
+		JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp,
+		jint cvsPort, jobject vehicleTransitListen) {
+	string ip = jstring2string(env, cvsIp);
+	initMiddleware(ip, cvsPort);
+}
 
- /*
-  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
-  * Method:    yz_2_init
-  * Signature: (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ILjava/lang/String;Lvehicle_CVS/VehicleTransitListen_DSP;)V
-  */
- JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILjava_lang_String_2ILjava_lang_String_2Lvehicle_1CVS_VehicleTransitListen_1DSP_2
-   (JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp, jint cvsPort, jstring, jint, jstring, jobject){
+/*
+ * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
+ * Method:    yz_2_init
+ * Signature: (Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;ILjava/lang/String;Lvehicle_CVS/VehicleTransitListen_DSP;)V
+ */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILjava_lang_String_2ILjava_lang_String_2Lvehicle_1CVS_VehicleTransitListen_1DSP_2(
+		JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp,
+		jint cvsPort, jstring, jint, jstring, jobject) {
 
- }
-
+}
 
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
  * Method:    yz_2_destroy
  * Signature: ()V
  */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1destroy(
-		JNIEnv *, jclass){
+		JNIEnv *, jclass) {
 
- }
+}
 
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
@@ -249,7 +248,7 @@ using namespace std;
 
 	int ret = conn.connect();
 	logcatf("connect return %d\n", ret);
-	if (ret != 0){
+	if (ret != 0) {
 		return ret;
 	}
 	ret = conn.registerTerminal(msg);
@@ -267,14 +266,13 @@ using namespace std;
 	jstring authCode = string2jstring(env, cauthCode);
 	return authCode;
 }
-
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
  * Method:    yz_2_deregister
- * Signature: ()V
- */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1deregister(
-		JNIEnv *, jclass) {
+ * Signature: ()I
+ */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1deregister(
+		JNIEnv * env, jclass cls) {
 	Connection &conn = *g_conn_manager.getConnection(0);
-	(void) conn.deregisterTerminal();
+	return conn.deregisterTerminal();
 }
 

@@ -190,7 +190,7 @@ public class YZ_VehicleTransit_CVS {
 	/**
 	 * 终端注销
 	 */
-	public static native void yz_2_deregister();
+	public static native int yz_2_deregister();
 	
 
 }

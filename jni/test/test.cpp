@@ -183,9 +183,6 @@ TEST(jni_test, string_char_converter){
 	jstring jstr = string2jstring(
 }
 */
-TEST(middleware_test, init){
-	initMiddleware("121.101.223.68", 6973);
-}
 
 int main(int argc, char** argv){
 	::testing::InitGoogleTest(&argc, argv);
