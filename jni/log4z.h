@@ -236,13 +236,21 @@ extern __thread char g_log4zstreambuf[LOG4Z_LOG_BUF_SIZE];
 #define LOG_FATAL(id, log) LOG_STREAM(id, LOG_LEVEL_FATAL, log)
 
 //! super micro.
-#define LOGD( log ) LOG_DEBUG(LOG4Z_MAIN_LOGGER_ID, log )
-#define LOGI( log ) LOG_INFO(LOG4Z_MAIN_LOGGER_ID, log )
-#define LOGW( log ) LOG_WARN(LOG4Z_MAIN_LOGGER_ID, log )
-#define LOGE( log ) LOG_ERROR(LOG4Z_MAIN_LOGGER_ID, log )
-#define LOGA( log ) LOG_ALARM(LOG4Z_MAIN_LOGGER_ID, log )
-#define LOGF( log ) LOG_FATAL(LOG4Z_MAIN_LOGGER_ID, log )
-
+#ifndef NDEBUG
+	#define LOGD( log ) LOG_DEBUG(LOG4Z_MAIN_LOGGER_ID, log )
+	#define LOGI( log ) LOG_INFO(LOG4Z_MAIN_LOGGER_ID, log )
+	#define LOGW( log ) LOG_WARN(LOG4Z_MAIN_LOGGER_ID, log )
+	#define LOGE( log ) LOG_ERROR(LOG4Z_MAIN_LOGGER_ID, log )
+	#define LOGA( log ) LOG_ALARM(LOG4Z_MAIN_LOGGER_ID, log )
+	#define LOGF( log ) LOG_FATAL(LOG4Z_MAIN_LOGGER_ID, log )
+#else
+	#define LOGD( log )
+	#define LOGI( log )
+	#define LOGW( log )
+	#define LOGE( log )
+	#define LOGA( log )
+	#define LOGF( log )
+#endif // NDEBUG
 
 
 

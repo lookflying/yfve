@@ -34,6 +34,8 @@
  * (end of COPYRIGHT)
  */
 
+#ifndef NDEBUG
+
 #include "log4z.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -496,7 +498,7 @@ public:
 	}
 
 
-	//! ¶ÁÈ¡ÅäÖÃÎÄ¼þ²¢¸²Ð´
+	//! ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Ð´
 	bool Config(std::string cfgPath)
 	{
 		std::map<std::string, std::map<std::string, std::string> > cfgKey;
@@ -560,7 +562,7 @@ public:
 		return true;
 	}
 
-	//! ¸²Ð´Ê½´´½¨
+	//! ï¿½ï¿½Ð´Ê½ï¿½ï¿½ï¿½ï¿½
 	virtual LoggerId CreateLogger(std::string name,std::string path,int nLevel,bool display)
 	{
 		std::string _name;
@@ -597,7 +599,7 @@ public:
 		{
 			m_loggers[newID]._path = path;
 		}
-		//! Main logger ID ²»ÄÜ¸ü¸Ä name
+		//! Main logger ID ï¿½ï¿½ï¿½Ü¸ï¿½ï¿½ name
 		if (newID > LOG4Z_MAIN_LOGGER_ID)
 		{
 			m_loggers[newID]._name = name;
@@ -661,7 +663,7 @@ public:
 		return true;
 	}
 
-	//! ²éÕÒID
+	//! ï¿½ï¿½ï¿½ï¿½ID
 	virtual LoggerId FindLogger(std::string name)
 	{
 		std::map<std::string, LoggerId>::iterator iter;
@@ -1206,3 +1208,4 @@ ILog4zManager * ILog4zManager::GetInstance()
 _ZSUMMER_LOG4Z_END
 _ZSUMMER_END
 
+#endif //NDEBUG
