@@ -5,6 +5,8 @@
  *  Author: ushrimp
  */
 
+#define EV_STANDALONE 1
+#include "ev.c"
 #include "Connection.h"
 
 #include <unistd.h>
@@ -28,8 +30,6 @@
 #include "ScopeLock.h"
 #include "YzHelper.h"
 
-#define EV_STANDALONE 1
-#include "ev.c"
 
 using namespace std;
 
@@ -248,9 +248,9 @@ int Connection::connectAndAuthorize()
 
 
 /**
- * logout
+ * deregisterTerminal
  */
-int Connection::logout()
+int Connection::deregisterTerminal()
 {
 	ScopeLock lock(&this->mutex_);
 	if (this->status_!= CONNECTED_AUTHORIZED) {

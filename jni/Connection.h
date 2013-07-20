@@ -72,9 +72,9 @@ public:
 	int registerTerminal(const TerminalRegisterMessage &msg);
 
 	/**
-	 * logout
+	 * deregister
 	 */
-	int logout();
+	int deregisterTerminal();
 
 	/**
 	 * disconnect from server anyway

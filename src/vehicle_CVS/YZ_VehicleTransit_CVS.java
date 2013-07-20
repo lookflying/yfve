@@ -11,8 +11,8 @@ public class YZ_VehicleTransit_CVS {
 	 * 登录 函数类型：同步函数
 	 * 
 	 * @param simcardnum
-	 *            Sim卡对应的电话号码 (用作鉴权码）
-	 * @param username
+	 *            Sim卡对应的电话号码 
+	 * @param username(用作鉴权码）
 	 *            工号
 	 * @param password
 	 *            密码
@@ -76,13 +76,6 @@ public class YZ_VehicleTransit_CVS {
 			double longitude, double latitude, int PredictDays,
 			WeatherStruct_DSP weatherStruct);
 
-	/**
-	 * 服务器主推天气信息 函数类型：异步函数
-	 * 
-	 * @param weatherSturt
-	 */
-	public static native void yz_3_weathercallback(
-			WeatherStruct_DSP weatherStruct);
 
 	/**
 	 * 根据城市代码获取天气预报 函数类型：同步函数

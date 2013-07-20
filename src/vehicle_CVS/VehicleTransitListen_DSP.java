@@ -35,4 +35,13 @@ public interface VehicleTransitListen_DSP {
 	 * @param tmcStruct
 	 */
 	public void yz_3_TMCcallback(TMCStruct_DSP tmcStruct);
+	
+
+	/**
+	 * 服务器主推天气信息 函数类型：异步函数
+	 * 
+	 * @param weatherSturt
+	 */
+	public void yz_3_weathercallback(
+			WeatherStruct_DSP weatherStruct);
 }
