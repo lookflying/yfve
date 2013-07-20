@@ -72,6 +72,11 @@ public:
 	int registerTerminal(const TerminalRegisterMessage &msg);
 
 	/**
+	 * logout
+	 */
+	int logout();
+
+	/**
 	 * disconnect from server anyway
 	 * return 0 if successfully disconnected
 	 * return YZ_CON_CLOSED if not connected
@@ -94,8 +99,6 @@ public:
 	 *
 	 */
 	int sendMessageAndWait(MSG_WORD msgid, const char *content, size_t len, msg_body_t **pbody, bool critical = false);
-
-	int do_sendMessageAndWait(const PackedMessage &msg, msg_body_t **pbody);
 
 	/**
 	 * name of the connection
@@ -149,6 +152,7 @@ public:
 	void setMessageHandler(messageHandler_t handler) { messageHandler_ = handler; }
 
 	static std::set<MSG_WORD> responseMsgIdSet;
+	static const int DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS;
 private:
 	/**
 	 * callback when socket reabab#	modified:   Connection.cpp
@@ -160,6 +164,8 @@ private:
 	 * callback when timer comes
 	 */
 	static void timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents);
+
+	int do_sendMessageAndWait(const PackedMessage &msg, msg_body_t **pbody);
 
 	/**
 	 * when disconnected, reconnect
@@ -251,7 +257,6 @@ private:
 	pthread_t reconnectTid_;
 
 	static const int DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS;
-	static const int DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS;
 	static const int DEFAULT_HEARTBEAT_ITNERVAL_SECONDS;
 
 	static const int BUF_SIZE;

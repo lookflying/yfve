@@ -21,8 +21,6 @@
 #include <vector>
 #include <utility>
 
-#include "Connection.h"
-
 #include "message/message.h"
 #include "MessageTemplates.h"
 
@@ -37,7 +35,7 @@ using namespace std;
 
 const int Connection::DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS = 30;
 const int Connection::DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS = 30;
-const int Connection::DEFAULT_HEARTBEAT_ITNERVAL_SECONDS = 10;
+const int Connection::DEFAULT_HEARTBEAT_ITNERVAL_SECONDS = 30;
 
 const int ENCRYPTION = 0;
 
@@ -102,6 +100,8 @@ Connection::~Connection()
 	// ndk doesn't support pthread_cancel
 //	pthread_cancel(this->reconnectTid_);
 	pthread_kill(this->reconnectTid_, SIGUSR1);
+	pthread_mutex_destroy(&this->mutex_);
+	pthread_cond_destroy(&this->cond_);
 }
 
 /**
@@ -144,17 +144,17 @@ int Connection::initServerAddr(const std::string &ip, int port)
 int Connection::connect()
 {
 	ScopeLock lock(&this->mutex_);
-	if (this->status_ != CLOSED) {
-		return YZ_OK;
-	}
 	if (this->addressInited_ == false) {
 		return YZ_SOCK_ERROR;
+	}
+	if (this->status_ > CONNECTING) {
+		return YZ_OK;
 	}
 	return this->do_connect(this->maxConnectRetry_);
 }
 
 /**
- * disconnect first and then reconnect
+ * disconnect first and then connect, mutex_ should be hold
  * @param retry count before give up if nonzero, otherwise retry forever
  * return YZ_OK on success
  * return nonzero values if error occurred, cases are
@@ -167,7 +167,7 @@ int Connection::do_connect(int retry)
 	this->status_ = CONNECTING;
 
 	bool forever = (retry == 0) ? true : false;
-	int retryTime = 1, error = 0, sockfd = -1;
+	int retryTime = 1, error = YZ_OK, sockfd = -1;
 	while (forever || retryTime <= retry) {
 		LOGD("try connecting to " << this->ip_ << ':' << this->port_ << " for the " << retryTime << "th time");
 		++retryTime;
@@ -211,7 +211,7 @@ int Connection::do_connect(int retry)
 }
 
 /**
- * send authorize message to server and wait response
+ * send authorize message to server and wait response, send pending messages
  * return YZ_OK on success
  * return YZ_DUP_LOGIN if already logged in
  * return YZ_LOGIN_FAIL if failed to login
@@ -228,6 +228,7 @@ int Connection::connectAndAuthorize()
 		return ret;
 	}
 
+	//
 	while (this->pendingMsgs_.empty() == false) {
 		msg_body_t *body;
 		ret = this->do_sendMessageAndWait(**this->pendingMsgs_.rbegin(), &body);
@@ -236,11 +237,32 @@ int Connection::connectAndAuthorize()
 		} else {
 			delete body->content;
 			delete body;
+			delete *(this->pendingMsgs_.rbegin());
 			this->pendingMsgs_.erase(this->pendingMsgs_.end() - 1);
 		}
 	}
 
 	return 0;
+}
+
+
+
+/**
+ * logout
+ */
+int Connection::logout()
+{
+	ScopeLock lock(&this->mutex_);
+	if (this->status_!= CONNECTED_AUTHORIZED) {
+		return YZ_NOT_LOGIN;
+	}
+	msg_body_t *body;
+	int ret = this->sendMessageAndWait(YZMSGID_TERMINAL_LOGOUT, NULL, 0, &body, false);
+	if (ret == YZ_OK) {
+		delete body->content;
+		delete body;
+	}
+	return ret;
 }
 
 int Connection::do_connectAndAuthorize()
@@ -330,7 +352,7 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg)
 			response.parse(*pbody);
 			delete pbody->content;
 			delete pbody;
-			// fixme
+			// fixme result definition is not clear enough
 			switch (response.result)
 			{
 			case 0:
@@ -355,10 +377,8 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg)
 			}
 		}
 	}
-	return YZ_CON_TIMEOUT;
 
-	// we never get here
-	return 0;
+	return YZ_CON_TIMEOUT;
 }
 
 /**
@@ -462,7 +482,6 @@ void Connection::dataHandler(const char *data, size_t len)
 
 			// trying to parse the message
 			msg_serialized_message_t serialized;
-			// fixme cast is not good
 			serialized.data = (MSG_BYTE*)(this->buffer_.c_str());
 			serialized.length = this->buffer_.size();
 			msg_message_t msg;
@@ -620,9 +639,6 @@ msg_body_t *Connection::waitMessage(MSG_WORD msgSerial, int timeoutseconds)
 	outtime.tv_sec += outtime.tv_nsec / (1000 * 1000 * 1000);
 	outtime.tv_nsec = outtime.tv_nsec % 1000 * 1000 * 1000;
 
-	// the lock have already been acquired
-	//pthread_mutex_lock(&this->mutex_);
-
 	map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.insert(pair<MSG_WORD, msg_body_t*>(msgSerial, NULL)).first;
 	int error = 0;
 	while (iter->second == NULL && this->status_ != CLOSED && this->status_ != CONNECTING && error != ETIMEDOUT) {
@@ -632,7 +648,6 @@ msg_body_t *Connection::waitMessage(MSG_WORD msgSerial, int timeoutseconds)
 	msg_body_t *msg = iter->second;
 	this->msgBuffer_.erase(iter);
 
-	//pthread_mutex_unlock(&this->mutex_);
 	return msg;
 }
 
@@ -706,10 +721,16 @@ void *Connection::reconnectWorker(void *param)
 				LOGD("reconnecting...");
 
 				int ret = conn->do_connectAndAuthorize();
+				if (conn->status_ < CONNECTED && conn->closedHandler_ != NULL) {
+					conn->closedHandler_(*conn);
+				}
 				LOGD("reconnect " << ret << " " << conn->status_);
 				conn->needReauthorization_ = ret == 0 || ret == YZ_DUP_LOGIN;
 			} else {
-				// todo need reconnect or not
+				// fixme need reconnect or not
+				// did not reconnect here, because most of the messages will
+				// be sent when authoeized; in another way, only registerTerminal
+				// method call makes sense when connected and unauthorized
 			}
 		}
 

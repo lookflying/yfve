@@ -69,7 +69,7 @@ int ConnectionManager::stop()
 
 void ConnectionManager::idle_cb(struct ev_loop *loop, struct ev_idle *w, int revents)
 {
-	LOGD("idle_cb");
+	LOGD("idle_cb" << Connection::DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS ) ;
 	sleep(1);
 }
 
