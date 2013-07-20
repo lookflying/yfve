@@ -72,6 +72,11 @@ public:
 	int registerTerminal(const TerminalRegisterMessage &msg);
 
 	/**
+	 * logout
+	 */
+	int logout();
+
+	/**
 	 * disconnect from server anyway
 	 * return 0 if successfully disconnected
 	 * return YZ_CON_CLOSED if not connected

@@ -245,6 +245,26 @@ int Connection::connectAndAuthorize()
 	return 0;
 }
 
+
+
+/**
+ * logout
+ */
+int Connection::logout()
+{
+	ScopeLock lock(&this->mutex_);
+	if (this->status_!= CONNECTED_AUTHORIZED) {
+		return YZ_NOT_LOGIN;
+	}
+	msg_body_t *body;
+	int ret = this->sendMessageAndWait(YZMSGID_TERMINAL_LOGOUT, NULL, 0, &body, false);
+	if (ret == YZ_OK) {
+		delete body->content;
+		delete body;
+	}
+	return ret;
+}
+
 int Connection::do_connectAndAuthorize()
 {
 	if (this->status_ < CONNECTED) {
