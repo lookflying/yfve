@@ -63,7 +63,7 @@ public class YZ_VehicleTransit_CVS {
 	 * 根据经纬度获取天气预报 函数类型：同步函数
 	 * 
 	 * @param simcardnum
-	 *            卡对应的电话号码
+	 *            卡对应的电话号码（忽略）
 	 * @param longtitude
 	 *            经度
 	 * @param latitude
@@ -208,7 +208,7 @@ public class YZ_VehicleTransit_CVS {
 	 * 辅助函数，
 	 * 为解决findclass返回NULL的问题，在init前需要调用此函数，将回调函数中将会用到的java类传入
 	 */
-	public static void prepare_class() {
+	public static void yz_2_prepare_class() {
 		List<POIStruct_DSP> poiList = new ArrayList<POIStruct_DSP>();
 		TMCStruct_DSP tmc_struct = new TMCStruct_DSP();
 		WeatherStruct_DSP weather_struct = new WeatherStruct_DSP();
@@ -222,7 +222,7 @@ public class YZ_VehicleTransit_CVS {
 	 * @param tmc_struct
 	 * @param weather_struct
 	 */
-	public static native void prepare_class(List<POIStruct_DSP> poilist,
+	private static native void prepare_class(List<POIStruct_DSP> poilist,
 			TMCStruct_DSP tmc_struct, WeatherStruct_DSP weather_struct);
 
 }

@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				YZ_VehicleTransit_CVS.prepare_class();
+				YZ_VehicleTransit_CVS.yz_2_prepare_class();
 				YZ_VehicleTransit_CVS.yz_2_init("", text5.getText().toString(),
 						Integer.valueOf(text6.getText().toString()),
 						new FakeLinsten());
