@@ -11,6 +11,7 @@ using namespace std;
 
 ConnectionManager g_conn_manager;
 
+bool g_working = false;
 JavaVM * g_jvm = NULL;
 
 jobject g_listen_obj = NULL;
@@ -106,8 +107,8 @@ void connClosedHandler(const Connection &conn) {
 
 void startMiddleware(const std::string server_ip, const int server_port) {
 	MSG_WORD platformResponseMsgIds[] = {
-//		YZMSGID_GENERAL_PLATFORM_RESPONSE,
-//		YZMSGID_TERMINAL_REGISTER_RESPONSE,
+		YZMSGID_GENERAL_PLATFORM_RESPONSE,
+		YZMSGID_TERMINAL_REGISTER_RESPONSE,
 
 			};
 	Connection::responseMsgIdSet.insert(platformResponseMsgIds,
@@ -121,7 +122,7 @@ void startMiddleware(const std::string server_ip, const int server_port) {
 	g_connection.initServerAddr(server_ip, server_port);
 	g_connection.setMessageHandler(messageHandler);
 	g_connection.setClosedHandler(connClosedHandler);
-
+	g_working = true;
 }
 
 void setJVM(JNIEnv *env) {
@@ -130,10 +131,11 @@ void setJVM(JNIEnv *env) {
 
 void stopMiddleware() {
 	(void) g_conn_manager.stop();
+	g_working = false;
 }
 
 void unsetJVM() {
-	g_jvm->DestroyJavaVM();
+//	g_jvm->DestroyJavaVM();
 	g_jvm = NULL;
 }
 

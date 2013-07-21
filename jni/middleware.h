@@ -17,6 +17,7 @@ extern JavaVM * g_jvm;
 extern jclass g_poilist_cls;
 extern jclass g_tmc_struct_cls;
 extern jclass g_weather_struct_cls;
+extern bool g_working;
 /**
  * 启动化中间件
  */
