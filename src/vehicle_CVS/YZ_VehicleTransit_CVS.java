@@ -1,5 +1,6 @@
 package vehicle_CVS;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class YZ_VehicleTransit_CVS {
@@ -11,9 +12,9 @@ public class YZ_VehicleTransit_CVS {
 	 * 登录 函数类型：同步函数
 	 * 
 	 * @param simcardnum
-	 *            Sim卡对应的电话号码 
-	 * @param username(用作鉴权码）
-	 *            工号
+	 *            Sim卡对应的电话号码
+	 * @param username
+	 *            (用作鉴权码） 工号
 	 * @param password
 	 *            密码
 	 * @param person
@@ -75,7 +76,6 @@ public class YZ_VehicleTransit_CVS {
 	public static native int yz_3_getweather(String simcardnum,
 			double longitude, double latitude, int PredictDays,
 			WeatherStruct_DSP weatherStruct);
-
 
 	/**
 	 * 根据城市代码获取天气预报 函数类型：同步函数
@@ -170,27 +170,52 @@ public class YZ_VehicleTransit_CVS {
 	public static native int yz_3_modifyMediaPath(String path);
 
 	/**
-	 * 终端注册
-	 * 函数类型：同步
-	 * @param provinceId 省域编号
-	 * @param cityId 市县域编号
-	 * @param makerid 制造商ID
-	 * @param terminalModel 终端型号
-	 * @param terminalId 终端ID
-	 * @param plateColor 车牌颜色
-	 * @param plateNum 车牌号码
-	 * @param authCode 注册成功返回得授权码
+	 * 终端注册 函数类型：同步
+	 * 
+	 * @param provinceId
+	 *            省域编号
+	 * @param cityId
+	 *            市县域编号
+	 * @param makerid
+	 *            制造商ID
+	 * @param terminalModel
+	 *            终端型号
+	 * @param terminalId
+	 *            终端ID
+	 * @param plateColor
+	 *            车牌颜色
+	 * @param plateNum
+	 *            车牌号码
+	 * @param authCode
+	 *            注册成功返回得授权码
 	 * @return 成功返回0，失败返回错误码
 	 */
 	public static native int yz_2_register(int provinceId, int cityId,
 			String makerId, String terminalModel, String terminalId,
 			int plateColor, String plateNum);
-	
+
 	public static native String yz_2_getAuthCode();
+
 	/**
 	 * 终端注销
 	 */
 	public static native int yz_2_deregister();
-	
+
+	public static void prepare_class() {
+		List<POIStruct_DSP> poiList = new ArrayList<POIStruct_DSP>();
+		TMCStruct_DSP tmc_struct = new TMCStruct_DSP();
+		WeatherStruct_DSP weather_struct = new WeatherStruct_DSP();
+		prepare_class(poiList, tmc_struct, weather_struct);
+	}
+
+	/**
+	 * prepare call back class
+	 * 
+	 * @param poilist
+	 * @param tmc_struct
+	 * @param weather_struct
+	 */
+	public static native void prepare_class(List<POIStruct_DSP> poilist,
+			TMCStruct_DSP tmc_struct, WeatherStruct_DSP weather_struct);
 
 }

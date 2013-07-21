@@ -44,4 +44,5 @@ public interface VehicleTransitListen_DSP {
 	 */
 	public void yz_3_weathercallback(
 			WeatherStruct_DSP weatherStruct);
+	
 }

@@ -1,6 +1,5 @@
 package vehicle_CVS;
 
-import android.R.integer;
 
 public class VehicleDataStruct_CVS {
 	/*int rotationSpeed;	//转速，单位（rpm）*/	

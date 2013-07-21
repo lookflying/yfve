@@ -109,7 +109,10 @@ using namespace std;
 		JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp,
 		jint cvsPort, jobject vehicleTransitListen) {
 	string ip = jstring2string(env, cvsIp);
-	initMiddleware(ip, cvsPort);
+	setJVM(env);
+	setListen(env, vehicleTransitListen);
+	startMiddleware(ip, cvsPort);
+
 }
 
 /*
@@ -127,7 +130,11 @@ using namespace std;
  * Method:    yz_2_destroy
  * Signature: ()V
  */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1destroy(
-		JNIEnv *, jclass) {
+		JNIEnv *env, jclass cls) {
+	 stopMiddleware();
+	 unsetListen(env);
+	 unsetJVM();
+	 unsetCls(env);
 
 }
 
@@ -190,4 +197,21 @@ using namespace std;
 	Connection &conn = *g_conn_manager.getConnection(0);
 	return conn.deregisterTerminal();
 }
+
+ /*
+  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
+  * Method:    prepare_class
+  * Signature: (Ljava/util/List;Lvehicle_CVS/TMCStruct_DSP;Lvehicle_CVS/WeatherStruct_DSP;)V
+  */
+ JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_prepare_1class
+   (JNIEnv *env, jclass cls , jobject poilist, jobject tmc_struct, jobject weather_struct){
+	 jclass poilist_cls = env->GetObjectClass(poilist);
+	 g_poilist_cls = reinterpret_cast<jclass>(env->NewGlobalRef(poilist_cls));
+	 jclass tmc_struct_cls = env->GetObjectClass(tmc_struct);
+	 g_tmc_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(tmc_struct_cls));
+	 jclass weather_struct_cls = env->GetObjectClass(g_tmc_struct_cls);
+	 g_weather_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(weather_struct_cls));
+
+
+ }
 
