@@ -22,4 +22,92 @@ public class WeatherStruct_DSP {
 	String retain4; //保留字段4
 	String retain5;	//保留字段5
 	
+	
+	public Long getReleaseTime()
+	{
+		return releaseTime;
+	}
+	
+	public double getLongitude()
+	{
+		return longitude;
+	}
+	
+	public double getLatitude()
+	{
+		return latitude;
+	}
+	
+	public String getCityCode()
+	{
+		return cityCode;
+	}
+	
+	public String getCityName()
+	{
+		return cityName;
+	}
+	
+	public String getCurrCondition()
+	{
+		return currCondition;
+	}
+	
+	public int getCurrConditionType()
+	{
+		return currConditionType;
+	}
+	
+	public int getCurrTemp_c()
+	{
+		return currTemp_c;
+		
+	}
+	
+	
+	public float getCurrHumidity()
+	{
+		return currHumidity;
+	}
+	
+	public String getCurrWindDirection()
+	{
+		return currWindDirection;
+	}
+	
+	public int getCurrWindPower()
+	{
+		return currWindPower;
+	}
+	
+	public List<WeatherIndex> getWeatherIndexList()
+	{
+		return WeatherIndexList;
+	}
+	
+	public List<WeatherBrief> getWeatherBriefList()
+	{
+		return WeatherBriefList;
+	}
+	public String getRetain1()
+	{
+		return retain1;
+	}
+	public String getRetain2()
+	{
+		return retain2;
+	}
+	public String getRetain3()
+	{
+		return retain3;
+	}
+	public String getRetain4()
+	{
+		return retain4;
+	}
+	public String getRetain5()
+	{
+		return retain5;
+	}
+	
 }

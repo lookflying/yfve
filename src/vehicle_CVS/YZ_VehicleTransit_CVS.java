@@ -9,7 +9,7 @@ public class YZ_VehicleTransit_CVS {
 	}
 
 	/**
-	 * 登录 函数类型：同步函数
+	 * 登录（鉴权） 函数类型：同步函数
 	 * 
 	 * @param simcardnum
 	 *            Sim卡对应的电话号码
@@ -25,7 +25,7 @@ public class YZ_VehicleTransit_CVS {
 			String password, String[] person);
 
 	/**
-	 * 注销 函数类型：同步函数
+	 * 注销（断开连接） 函数类型：同步函数
 	 * 
 	 * @param simcardnum
 	 *            Sim卡对应的电话号码
@@ -50,7 +50,7 @@ public class YZ_VehicleTransit_CVS {
 	/**
 	 * 车辆状态上传 函数类型：同步函数
 	 * 
-	 * @param simcardnum
+	 * @param simcardnum（忽略）
 	 *            卡对应的电话号码
 	 * @param vehiclestatus
 	 *            车辆状态， 0为空闲中，1为工作中，2为保养中
@@ -63,7 +63,7 @@ public class YZ_VehicleTransit_CVS {
 	 * 根据经纬度获取天气预报 函数类型：同步函数
 	 * 
 	 * @param simcardnum
-	 *            卡对应的电话号码
+	 *            卡对应的电话号码（忽略）
 	 * @param longtitude
 	 *            经度
 	 * @param latitude
@@ -130,7 +130,7 @@ public class YZ_VehicleTransit_CVS {
 	 * @param vehicleTransitListen
 	 *            事件监听
 	 */
-	public static native void yz_2_init(String terminalID, String cvsIp,
+	public static native int yz_2_init(String terminalID, String cvsIp,
 			int cvsPort, VehicleTransitListen_DSP vehicleTransitListen);
 
 	/**
@@ -193,15 +193,22 @@ public class YZ_VehicleTransit_CVS {
 	public static native int yz_2_register(int provinceId, int cityId,
 			String makerId, String terminalModel, String terminalId,
 			int plateColor, String plateNum);
-
+	/**
+	 * 获取授权码， 须在鉴权后调用。
+	 * @return 返回授权码
+	 */
 	public static native String yz_2_getAuthCode();
 
 	/**
-	 * 终端注销
+	 * 终端注销，须在鉴权后调用
 	 */
 	public static native int yz_2_deregister();
 
-	public static void prepare_class() {
+	/**
+	 * 辅助函数，
+	 * 为解决findclass返回NULL的问题，在init前需要调用此函数，将回调函数中将会用到的java类传入
+	 */
+	public static void yz_2_prepare_class() {
 		List<POIStruct_DSP> poiList = new ArrayList<POIStruct_DSP>();
 		TMCStruct_DSP tmc_struct = new TMCStruct_DSP();
 		WeatherStruct_DSP weather_struct = new WeatherStruct_DSP();
@@ -215,7 +222,7 @@ public class YZ_VehicleTransit_CVS {
 	 * @param tmc_struct
 	 * @param weather_struct
 	 */
-	public static native void prepare_class(List<POIStruct_DSP> poilist,
+	private static native void prepare_class(List<POIStruct_DSP> poilist,
 			TMCStruct_DSP tmc_struct, WeatherStruct_DSP weather_struct);
 
 }
