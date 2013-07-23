@@ -52,6 +52,12 @@ void callVoidMethod(JNIEnv *env, jclass cls, const char* name, const char* sig,
 		...);
 
 /**
+ * 登录状态回调函数
+ */
+void logStateCallBack(string simcardnum, long userId, string authCode,
+		int state);
+
+/**
  * 清理jclass
  */
 void unsetCls(JNIEnv *env);
