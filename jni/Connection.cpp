@@ -527,7 +527,7 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *bo
 	if (responseMsgIdSet.count(msgid) != 0) {
 		MSG_WORD targetSerial;
 		MSG_SET_WORD(targetSerial, body->content[0], body->content[1]);
-		map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.find(msgSerial);
+		map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.find(targetSerial);
 		if (iter != this->msgBuffer_.end()) {
 			iter->second = body;
 			pthread_cond_broadcast(&this->cond_);
