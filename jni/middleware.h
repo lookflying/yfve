@@ -54,12 +54,26 @@ void callVoidMethod(JNIEnv *env, jclass cls, const char* name, const char* sig,
 /**
  * 登录状态回调函数
  */
-void logStateCallBack(string simcardnum, long userId, string authCode,
+void logStateCallBack(std::string simcardnum, long userId, std::string authCode,
 		int state);
 
 /**
  * 清理jclass
  */
 void unsetCls(JNIEnv *env);
+
+/**
+ * 登录状态结构体
+ */
+typedef struct log_state {
+	std::string simcardnum;
+	long userId;
+	std::string authCode;
+	int state;
+} log_state_t;
+/**
+ * 登录函数回调routine
+ */
+void* logStateCallBackWorker(void* p);
 
 #endif /* MIDDLEWARE_H_ */

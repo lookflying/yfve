@@ -72,9 +72,7 @@ bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 					"(Lvehicle_CVS/WeatherStruct_DSP;)V", weather_struct);
 			break;
 		}
-//		if (g_jvm->DetachCurrentThread() != JNI_OK) {
-//			logcatf("middleware", "DetachCurrentThread fail");
-//		}
+
 	}
 	*responseMsgid = (MSG_WORD) YZMSGID_GENERAL_TERMINAL_RESPONSE;
 	*response = "";
@@ -83,6 +81,13 @@ bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 	*response += (char) 0;
 
 	return true; //若返回false则不发送应答
+}
+
+void* logStateCallBackWorker(void* p) {
+	log_state_t* state_p = (log_state_t*) p;
+	logStateCallBack(state_p->simcardnum, state_p->userId, state_p->authCode,
+			state_p->state);
+	return (void*)0;
 }
 
 void logStateCallBack(string simcardnum, long userId, string authCode,
@@ -104,6 +109,9 @@ void logStateCallBack(string simcardnum, long userId, string authCode,
 					env->CallVoidMethod(g_listen_obj, mid, jsimcardnum, juserId,
 							jauthCode, jstate);
 				}
+			}
+			if (g_jvm->DetachCurrentThread() != JNI_OK) {
+				logcatf("middleware", "DetachCurrentThread fail");
 			}
 		}
 	}
