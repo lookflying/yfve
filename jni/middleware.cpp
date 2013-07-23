@@ -66,11 +66,14 @@ bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 					"(ILjava/util/List;I)V", poinum, poilist, result);
 			jobject tmc_struct = env->AllocObject(g_tmc_struct_cls);
 			callVoidMethod(env, cls, "yz_3_TMCcallback",
-					"(Lvehicle_CVS/TMCStruct_DSP;)V", tmc_struct);
+					"(Lvehicle_CVS/TMCStruct_DSP;)V", tmc_struct);/*
 			jobject weather_struct = env->AllocObject(g_weather_struct_cls);
 			callVoidMethod(env, cls, "yz_3_weathercallback",
-					"(Lvehicle_CVS/WeatherStruct_DSP;)V", weather_struct);
+					"(Lvehicle_CVS/WeatherStruct_DSP;)V", weather_struct);*/
 			break;
+		}
+		if (g_jvm->DetachCurrentThread() != JNI_OK) {
+			logcatf("middleware", "DetachCurrentThread fail");
 		}
 
 	}
@@ -79,7 +82,6 @@ bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 	*response += big_endian((MSG_WORD) msgSerial);
 	*response += big_endian((MSG_WORD) msgid);
 	*response += (char) 0;
-
 	return true; //若返回false则不发送应答
 }
 
@@ -87,7 +89,7 @@ void* logStateCallBackWorker(void* p) {
 	log_state_t* state_p = (log_state_t*) p;
 	logStateCallBack(state_p->simcardnum, state_p->userId, state_p->authCode,
 			state_p->state);
-	return (void*)0;
+	return (void*) 0;
 }
 
 void logStateCallBack(string simcardnum, long userId, string authCode,
@@ -122,10 +124,11 @@ void connClosedHandler(const Connection &conn) {
 }
 
 void startMiddleware(const std::string server_ip, const int server_port) {
-	MSG_WORD platformResponseMsgIds[] = { YZMSGID_GENERAL_PLATFORM_RESPONSE,
-			YZMSGID_TERMINAL_REGISTER_RESPONSE,
+	MSG_WORD platformResponseMsgIds[] = {
+			YZMSGID_GENERAL_PLATFORM_RESPONSE,
+//			YZMSGID_TERMINAL_REGISTER_RESPONSE,
 
-	};
+			};
 	Connection::responseMsgIdSet.insert(platformResponseMsgIds,
 			platformResponseMsgIds
 					+ sizeof(platformResponseMsgIds)
