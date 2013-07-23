@@ -218,6 +218,8 @@ private:
 
 	static void *reconnectWorker(void *);
 
+	static void *messageHandlerWorker(void *);
+
 	/**
 	 * start ev watcher
 	 */
