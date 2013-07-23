@@ -240,7 +240,7 @@ using namespace std;
 	jclass tmc_struct_cls = env->GetObjectClass(tmc_struct);
 	g_tmc_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(
 			tmc_struct_cls));
-	jclass weather_struct_cls = env->GetObjectClass(g_tmc_struct_cls);
+	jclass weather_struct_cls = env->GetObjectClass(weather_struct);
 	g_weather_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(
 			weather_struct_cls));
 

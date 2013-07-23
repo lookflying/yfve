@@ -43,6 +43,11 @@ void callVoidMethod(JNIEnv *env, jclass cls, const char* name, const char* sig,
 	}
 }
 
+jobject callDefaultConstructor(JNIEnv *env, jclass cls){
+	jmethodID mid = env->GetMethodID(cls,"<init>","()V");
+	return env->NewObject(cls, mid);
+}
+
 jobject getNewObject(JNIEnv *env, const char* name) {
 	jclass cls = env->FindClass(name);
 	return env->AllocObject(cls);
@@ -66,10 +71,12 @@ bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 					"(ILjava/util/List;I)V", poinum, poilist, result);
 			jobject tmc_struct = env->AllocObject(g_tmc_struct_cls);
 			callVoidMethod(env, cls, "yz_3_TMCcallback",
-					"(Lvehicle_CVS/TMCStruct_DSP;)V", tmc_struct);/*
+					"(Lvehicle_CVS/TMCStruct_DSP;)V", tmc_struct);
+
+
 			jobject weather_struct = env->AllocObject(g_weather_struct_cls);
 			callVoidMethod(env, cls, "yz_3_weathercallback",
-					"(Lvehicle_CVS/WeatherStruct_DSP;)V", weather_struct);*/
+					"(Lvehicle_CVS/WeatherStruct_DSP;)V", weather_struct);
 			break;
 		}
 		if (g_jvm->DetachCurrentThread() != JNI_OK) {
