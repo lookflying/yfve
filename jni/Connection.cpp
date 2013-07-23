@@ -504,6 +504,18 @@ void Connection::dataHandler(const char *data, size_t len)
 	}
 }
 
+struct MessageHandlerWorkerParam{
+	Connection *conn;
+	MSG_WORD id;
+	MSG_WORD serial;
+	msg_body_t *body;
+	~MessageHandlerWorkerParam()
+	{
+		delete[] body->content;
+		delete body;
+	}
+};
+
 /**
  * call when a message arrived, called in datahandler
  */
@@ -517,7 +529,7 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *bo
 	if (responseMsgIdSet.count(msgid) != 0) {
 		MSG_WORD targetSerial;
 		MSG_SET_WORD(targetSerial, body->content[0], body->content[1]);
-		map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.find(msgSerial);
+		map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.find(targetSerial);
 		if (iter != this->msgBuffer_.end()) {
 			iter->second = body;
 			pthread_cond_broadcast(&this->cond_);
@@ -525,16 +537,24 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *bo
 		} else {
 			// may recieved a heartbeat response packet
 		}
+		delete[] body->content;
+		delete body;
 	} else {
-		string response;
-		MSG_WORD responseMsgid;
-		if (this->messageHandler_ != NULL &&
-				this->messageHandler_(*this, msgid, msgSerial, *body, &responseMsgid, &response) == true) {
-			this->sendMessage(responseMsgid, response.c_str(), response.length());
+		if (this->messageHandler_ != NULL) {
+			MessageHandlerWorkerParam *param = new MessageHandlerWorkerParam();
+			param->conn = this;
+			param->id = msgid;
+			param->serial = msgSerial;
+			param->body = body;
+			pthread_t tid;
+			if (pthread_create(&tid, NULL, Connection::messageHandlerWorker, param) != 0) {
+				delete param;
+			}
+		} else {
+			delete[] body->content;
+			delete body;
 		}
 	}
-	delete[] body->content;
-	delete body;
 }
 
 bool Connection::sendMessageOnceAndWait(int timeoutseconds, MSG_WORD msgSerial, const std::vector<msg_serialized_message_t> &packets, msg_body_t **pmsg)
@@ -739,7 +759,21 @@ void *Connection::reconnectWorker(void *param)
 	return NULL;
 }
 
+void *Connection::messageHandlerWorker(void *p)
+{
+	MessageHandlerWorkerParam *param = static_cast<MessageHandlerWorkerParam*>(p);
+	ScopeLock lock(&param->conn->mutex_);
 
+	string response;
+	MSG_WORD responseMsgid;
+	if (param->conn->messageHandler_ != NULL &&
+			param->conn->messageHandler_(*param->conn, param->id, param->serial, *param->body, &responseMsgid, &response) == true) {
+		param->conn->sendMessage(responseMsgid, response.c_str(), response.length());
+	}
+
+	delete param;
+	return NULL;
+}
 
 
 
