@@ -522,7 +522,7 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial,
 		logcatf("received response id = 0x%04x, seq = %u, response seq = %u",
 				msgid, msgSerial, targetSerial);
 		map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.find(
-				msgSerial);
+				targetSerial);
 		if (iter != this->msgBuffer_.end()) {
 			iter->second = body;
 			pthread_cond_broadcast(&this->cond_);
