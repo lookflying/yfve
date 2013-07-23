@@ -19,7 +19,11 @@ public class FakeLinsten implements VehicleTransitListen_DSP {
 	@Override
 	public void yz_3_loginstatecallback(String terminalID, long userId,
 			String userName, int state) {
-		Log.d("call back", "yz_3_loginstatecallback called");
+		Log.d("call back", "yz_3_loginstatecallback");
+		Log.d("call back",
+				String.format(
+						"tid = %s, userId = %d, userName = %s, state = %d",
+						terminalID, userId, userName, state));
 
 	}
 

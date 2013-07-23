@@ -5,6 +5,7 @@
 #include "message/message.h"
 #include <ctime>
 #include <stdlib.h>
+#include <pthread.h>
 using namespace std;
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
@@ -21,8 +22,15 @@ using namespace std;
 		Connection &conn = *g_conn_manager.getConnection(0);
 		conn.setAuthorizationCode(authCode);
 		int ret = conn.connectAndAuthorize();
-		if (ret == 0){
-			//TODO
+		if (ret == 0) {
+			static log_state_t state;
+			state.simcardnum = csimcardnum;
+			state.authCode = authCode;
+			state.state = 0;
+			state.userId = 0;
+			pthread_t tid;
+			(void) pthread_create(&tid, NULL, logStateCallBackWorker,
+					(void*) &state);
 		}
 		return ret;
 	} else {
@@ -38,6 +46,16 @@ using namespace std;
 		JNIEnv * env, jclass cls, jstring, jstring) {
 	Connection &conn = *g_conn_manager.getConnection(0);
 	int ret = conn.disconnect();
+	if (ret == 0) {
+		static log_state_t state;
+		state.simcardnum = "";
+		state.authCode = "";
+		state.state = 2;
+		state.userId = 0;
+		pthread_t tid;
+		(void) pthread_create(&tid, NULL, logStateCallBackWorker,
+				(void*) &state);
+	}
 	return ret;
 }
 
