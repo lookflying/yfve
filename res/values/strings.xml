@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">yfve</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="register">Register</string>
+    <string name="deregister">Deregister</string>
+    <string name="login">Login</string>
+    <string name="logout">Logout</string>
+    <string name="sendgps">Send GPS</string>
+    <string name="sendcarstatus">Send Car Status</string>
+    <string name="serverip">121.101.223.68</string>
+    <string name="serverport">6973</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+</resources>
