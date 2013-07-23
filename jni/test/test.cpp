@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "../message/message.h"
+#include "../middleware.h"
 #include <string>
 #include <cstring>
 #include <cstdlib>

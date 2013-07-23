@@ -5,6 +5,8 @@
  *  Author: ushrimp
  */
 
+#define EV_STANDALONE 1
+#include "ev.c"
 #include "Connection.h"
 
 #include <unistd.h>
@@ -28,8 +30,6 @@
 #include "ScopeLock.h"
 #include "YzHelper.h"
 
-#define EV_STANDALONE 1
-#include "ev.c"
 
 using namespace std;
 
@@ -202,6 +202,7 @@ int Connection::do_connect(int retry)
 	if (error == YZ_OK) {
 		this->sockfd_ = sockfd;
 		this->status_ = CONNECTED;
+		this->latestPacketRecievedTime_ = time(NULL);
 		this->startEv();
 	} else {
 		this->sockfd_ = -1;
@@ -235,7 +236,7 @@ int Connection::connectAndAuthorize()
 		if (ret != 0) {
 			return ret;
 		} else {
-			delete body->content;
+			delete[] body->content;
 			delete body;
 			delete *(this->pendingMsgs_.rbegin());
 			this->pendingMsgs_.erase(this->pendingMsgs_.end() - 1);
@@ -248,21 +249,30 @@ int Connection::connectAndAuthorize()
 
 
 /**
- * logout
+ * deregisterTerminal
  */
-int Connection::logout()
+int Connection::deregisterTerminal()
 {
-	ScopeLock lock(&this->mutex_);
-	if (this->status_!= CONNECTED_AUTHORIZED) {
-		return YZ_NOT_LOGIN;
+	msg_body_t *pbody;
+	int ret = this->sendMessageAndWait(YZMSGID_TERMINAL_DEREGISTER, NULL, 0, &pbody, false);
+	if (ret == 0) {
+		TerminalRegisterResponseMessage response;
+		response.parse(*pbody);
+		delete[] pbody->content;
+		delete pbody;
+		// fixme result definition is not clear enough
+		switch (response.result) {
+			case 0:
+				return YZ_OK;
+			case 1:
+			case 2:
+			case 3:
+			default:
+				return YZ_DEVICE_NOT_REGIST;
+		}
+	} else {
+		return ret;
 	}
-	msg_body_t *body;
-	int ret = this->sendMessageAndWait(YZMSGID_TERMINAL_LOGOUT, NULL, 0, &body, false);
-	if (ret == YZ_OK) {
-		delete body->content;
-		delete body;
-	}
-	return ret;
 }
 
 int Connection::do_connectAndAuthorize()
@@ -337,10 +347,10 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg)
 	PackedMessage packedmsg(YZMSGID_TERMINAL_REGISTER, 0);
 	if (pack_msg(YZMSGID_TERMINAL_REGISTER, buf, ENCRYPTION, len, packedmsg.packets, packedmsg.serial) == false) {
 		this->disconnect();
-		delete buf;
+		delete[] buf;
 		return YZ_OUT_OF_MEM;
 	}
-	delete buf;
+	delete[] buf;
 
 	bool retryForever = this->maxConnectRetry_ <= 0 ? true : false;
 	int retryCount = 1;
@@ -350,7 +360,7 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg)
 		if (this->sendMessageOnceAndWait(interval, packedmsg.serial, packedmsg.packets, &pbody) == true) {
 			TerminalRegisterResponseMessage response;
 			response.parse(*pbody);
-			delete pbody->content;
+			delete[] pbody->content;
 			delete pbody;
 			// fixme result definition is not clear enough
 			switch (response.result)
@@ -654,10 +664,8 @@ msg_body_t *Connection::waitMessage(MSG_WORD msgSerial, int timeoutseconds)
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	struct timespec outtime;
-	outtime.tv_sec = now.tv_sec;
-	outtime.tv_nsec = (now.tv_usec + timeoutseconds * 1000 * 1000) * 1000;
-	outtime.tv_sec += outtime.tv_nsec / (1000 * 1000 * 1000);
-	outtime.tv_nsec = outtime.tv_nsec % 1000 * 1000 * 1000;
+	outtime.tv_nsec = 0;
+	outtime.tv_sec = now.tv_sec + timeoutseconds;
 
 	map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.insert(pair<MSG_WORD, msg_body_t*>(msgSerial, NULL)).first;
 	int error = 0;
@@ -680,7 +688,7 @@ void Connection::timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents)
 {
 	Connection *connection = static_cast<Connection*>(w->data);
 	ScopeLock lock(&connection->mutex_);
-	if (connection->status_ != CLOSED) {
+	if (connection->status_ == CONNECTED_AUTHORIZED) {
 		time_t now = time(NULL);
 		if (now - connection->latestPacketRecievedTime_ > connection->heartbeatDeadCount_ * connection->heartbeatIntervalSeconds_) {
 			connection->status_ = CONNECTING;

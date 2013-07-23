@@ -1,14 +1,15 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
-LOCAL_MODULE	:= yz_comm
+LOCAL_MODULE	:= vehicle_CVS
+LOCAL_CFLAGS := -DNDEBUG
 LOCAL_CXXFLAGS := -DHAVE_PTHREADS
-LOCAL_SRC_FILES := YzJni.cpp	\
+LOCAL_SRC_FILES := vehicle_CVS.cpp	\
 					message/message.cpp \
 					log4z.cpp \
 					YzHelper.cpp \
-					Connection.cpp
-					
-LOCAL_LDLIBS    := -llog
+					Connection.cpp \
+					ConnectionManager.cpp \
+					middleware.cpp
 LOCAL_SHARED_LIBRARIES := liblog libcutils
-LOCAL_LDLIBS += -L$(SYSROOT)/usr/lib -llog									
+LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -llog									
 include $(BUILD_SHARED_LIBRARY)

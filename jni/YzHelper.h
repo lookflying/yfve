@@ -6,6 +6,11 @@
  */
 #include <jni.h>
 #include <string>
+
+#include "message/message.h"
+#include "Connection.h"
+#include "ConnectionManager.h"
+
 #ifndef YZERR_H_
 #define YZERR_H_
 
@@ -31,13 +36,13 @@
 #define YZMSGID_TERMINAL_HEARTBEAT			0X0002
 #define YZMSGID_TERMINAL_REGISTER				0X0100
 #define YZMSGID_TERMINAL_REGISTER_RESPONSE	0X8100
-#define YZMSGID_TERMINAL_LOGOUT				0X0003
-#define YZMSGID_TERMINAL_AUTHORIZE			0X0102
+#define YZMSGID_TERMINAL_DEREGISTER				0X0003
+#define YZMSGID_TERMINAL_AUTHORIZE			0x0102
 #define YZMSGID_SET_TERMINAL_PARAMETER		0X8103
 #define YZMSGID_QUERY_TERMIAL_PARATETER		0X8104
 #define YZMSGID_QUERY_TERMIAL_PARATETER_RESPONSE	0X0104
 #define YZMSGID_TERMINAL_CONTROL				0X8105
-#define YZMSGID_POSITION_REPORT				0X0200
+#define YZMSGID_POSITION_REPORT				0X0200//位置信息汇报
 #define YZMSGID_POSISION_QUERY				0X8201
 #define YZMSGID_POSISION_QUERY_RESPONSE		0X0201
 #define YZMSGID_TMP_POSITION_CONTROL			0X8202
@@ -48,6 +53,48 @@
 #define YZMSGID_ASK_RESPONSE					0X0302
 
 
+
+/**
+ * printf to logcat
+ */
+void logcatf(const char* fmt, ...);
+/**
+ * jstring to string
+ */
 std::string jstring2string(JNIEnv* env, jstring jstr);
+/**
+ * string to jstring
+ */
 jstring string2jstring(JNIEnv* env, const std::string str);
+
+
+/**
+ * 将string中的内容封装为msg_body_t, 不进行内存拷贝
+ */
+msg_body_t string2msg_body(std::string content);
+
+/**
+ * 将字符串复制到指定长度得buf中，字符串长度不足时，自动补0
+ */
+void string2bytes(const std::string str, MSG_BYTE* target, unsigned int len);
+
+/**
+ * 序列化LocationStruct至string
+ */
+std::string locationStruct2string(JNIEnv* env, jobject loc);
+
+/**
+ *序列化VehicleDataStruct至string
+ */
+std::string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data);
+
+/**
+ *获取对象int型字段
+ */
+jint getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field);
+/**
+ *获取对象long型字段
+
+ */
+jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field);
 #endif /* YZERR_H_ */
