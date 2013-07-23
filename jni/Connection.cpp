@@ -30,6 +30,7 @@
 #include "ScopeLock.h"
 #include "YzHelper.h"
 
+
 using namespace std;
 
 const int Connection::DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS = 30;
@@ -47,11 +48,12 @@ public:
 	MSG_WORD msgid;
 	MSG_WORD serial;
 
-	PackedMessage(MSG_WORD id, MSG_WORD ser) :
-			msgid(id), serial(ser) {
-	}
+	PackedMessage(MSG_WORD id, MSG_WORD ser)
+		: msgid(id), serial(ser)
+	{ }
 
-	~PackedMessage() {
+	~PackedMessage()
+	{
 		for (vector<msg_serialized_message_t>::iterator iter = packets.begin();
 				iter != packets.end(); ++iter) {
 			clear_serialized_msg(*iter);
@@ -59,7 +61,8 @@ public:
 	}
 };
 
-int sendAll(int sockfd, const void *buf, size_t len, int opts) {
+int sendAll(int sockfd, const void *buf, size_t len, int opts)
+{
 	size_t idx = 0;
 	while (idx < len) {
 		int ret = ::send(sockfd, buf, len - idx, opts);
@@ -71,16 +74,15 @@ int sendAll(int sockfd, const void *buf, size_t len, int opts) {
 	return 0;
 }
 
-Connection::Connection() :
-		authorizationCode_(), name_("unknown"), ip_(), port_(0), addressInited_(
-				false), status_(CLOSED), needReauthorization_(false), sockfd_(
-				-1), loop_(NULL), //dataHandler_(NULL), closedHandler_(NULL),
-		closedHandler_(NULL), messageHandler_(NULL), messageRetryIntervalSeconds_(
-				DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS), connectRetryIntervalSeconds_(
-				DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS), maxConnectRetry_(3), packetStarted_(
-				false), latestPacketRecievedTime_(0), heartbeatIntervalSeconds_(
-				DEFAULT_HEARTBEAT_ITNERVAL_SECONDS), heartbeatDeadCount_(3), reconnectTid_(
-				0) {
+Connection::Connection()
+	: authorizationCode_(), name_("unknown"), ip_(), port_(0), addressInited_(false), status_(CLOSED),needReauthorization_(false), sockfd_(-1),
+	  loop_(NULL), //dataHandler_(NULL), closedHandler_(NULL),
+	  closedHandler_(NULL), messageHandler_(NULL),
+	  messageRetryIntervalSeconds_(DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS),
+	  connectRetryIntervalSeconds_(DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS),
+	  maxConnectRetry_(3), packetStarted_(false), latestPacketRecievedTime_(0),
+	  heartbeatIntervalSeconds_(DEFAULT_HEARTBEAT_ITNERVAL_SECONDS), heartbeatDeadCount_(3), reconnectTid_(0)
+{
 	bzero(&this->evwatcher_, sizeof(this->evwatcher_));
 	bzero(&this->evtimer_, sizeof(this->evtimer_));
 	this->evwatcher_.data = this;
@@ -92,7 +94,8 @@ Connection::Connection() :
 	pthread_create(&this->reconnectTid_, NULL, reconnectWorker, this);
 }
 
-Connection::~Connection() {
+Connection::~Connection()
+{
 	this->disconnect();
 	// ndk doesn't support pthread_cancel
 //	pthread_cancel(this->reconnectTid_);
@@ -108,12 +111,14 @@ Connection::~Connection() {
  * 1 status of the connection is CONNECTED, do nothing
  * 2 ip address is not corrected, original ip:port information is destroyed
  */
-int Connection::initServerAddr(const std::string &ip, int port) {
+int Connection::initServerAddr(const std::string &ip, int port)
+{
 	ScopeLock lock(&this->mutex_);
 
 	if (this->status_ != CLOSED) {
 		return 1;
-	}LOGD("initialize connection " << this->name_ << " with " << ip << ':' << port);
+	}
+	LOGD("initialize connection " << this->name_ << " with " << ip << ':' << port);
 	this->ip_ = ip;
 	this->port_ = port;
 
@@ -136,7 +141,8 @@ int Connection::initServerAddr(const std::string &ip, int port) {
  * return YZ_CON_TIMEOUT if fail to connect
  * return YZ_SOCK_ERROR, unlikely, such as memory insufficient
  */
-int Connection::connect() {
+int Connection::connect()
+{
 	ScopeLock lock(&this->mutex_);
 	if (this->addressInited_ == false) {
 		return YZ_SOCK_ERROR;
@@ -155,7 +161,8 @@ int Connection::connect() {
  * YZ_CON_TIMEOUT
  * YZ_SOCK_ERROR rarely happens, maybe memory is insufficient
  */
-int Connection::do_connect(int retry) {
+int Connection::do_connect(int retry)
+{
 	this->do_disconnect();
 	this->status_ = CONNECTING;
 
@@ -173,8 +180,7 @@ int Connection::do_connect(int retry) {
 			break;
 		}
 
-		if (::connect(sockfd, (sockaddr*) &this->servaddr_,
-				sizeof(this->servaddr_)) == -1) {
+		if (::connect(sockfd, (sockaddr*)&this->servaddr_, sizeof(this->servaddr_)) == -1) {
 			error = errno;
 			LOGE("cannot connect to " << this->ip_ << ':' << this->port_ << ": " << strerror(error));
 			close(sockfd);
@@ -214,7 +220,8 @@ int Connection::do_connect(int retry) {
  * YZ_OUT_OF_MEM
  * return YZ_SOCK_ERROR, unlikely, such as memory insufficient
  */
-int Connection::connectAndAuthorize() {
+int Connection::connectAndAuthorize()
+{
 	ScopeLock lock(&this->mutex_);
 	int ret = this->do_connectAndAuthorize();
 	this->needReauthorization_ = ret == 0 || ret == YZ_DUP_LOGIN;
@@ -239,13 +246,15 @@ int Connection::connectAndAuthorize() {
 	return 0;
 }
 
+
+
 /**
  * deregisterTerminal
  */
-int Connection::deregisterTerminal() {
+int Connection::deregisterTerminal()
+{
 	msg_body_t *pbody;
-	int ret = this->sendMessageAndWait(YZMSGID_TERMINAL_DEREGISTER, NULL, 0,
-			&pbody, false);
+	int ret = this->sendMessageAndWait(YZMSGID_TERMINAL_DEREGISTER, NULL, 0, &pbody, false);
 	if (ret == 0) {
 		TerminalRegisterResponseMessage response;
 		response.parse(*pbody);
@@ -253,20 +262,21 @@ int Connection::deregisterTerminal() {
 		delete pbody;
 		// fixme result definition is not clear enough
 		switch (response.result) {
-		case 0:
-			return YZ_OK;
-		case 1:
-		case 2:
-		case 3:
-		default:
-			return YZ_DEVICE_NOT_REGIST;
+			case 0:
+				return YZ_OK;
+			case 1:
+			case 2:
+			case 3:
+			default:
+				return YZ_DEVICE_NOT_REGIST;
 		}
 	} else {
 		return ret;
 	}
 }
 
-int Connection::do_connectAndAuthorize() {
+int Connection::do_connectAndAuthorize()
+{
 	if (this->status_ < CONNECTED) {
 		if (this->addressInited_ == false) {
 			return YZ_SOCK_ERROR;
@@ -281,9 +291,7 @@ int Connection::do_connectAndAuthorize() {
 		LOGD("start authorizing");
 		this->status_ = CONNECTED_AUTHORIZING;
 		PackedMessage packedmsg(YZMSGID_TERMINAL_AUTHORIZE, 0);
-		if (pack_msg(packedmsg.msgid, authorizationCode_.c_str(), ENCRYPTION,
-				authorizationCode_.length(), packedmsg.packets,
-				packedmsg.serial) == false) {
+		if (pack_msg(packedmsg.msgid, authorizationCode_.c_str(), ENCRYPTION, authorizationCode_.length(), packedmsg.packets, packedmsg.serial) == false) {
 			this->disconnect();
 			return YZ_OUT_OF_MEM;
 		}
@@ -293,8 +301,7 @@ int Connection::do_connectAndAuthorize() {
 		int interval = this->connectRetryIntervalSeconds_;
 		while (retryForever || retryCount <= this->maxConnectRetry_) {
 			msg_body_t *pbody;
-			if (this->sendMessageOnceAndWait(interval, packedmsg.serial,
-					packedmsg.packets, &pbody) == true) {
+			if (this->sendMessageOnceAndWait(interval, packedmsg.serial, packedmsg.packets, &pbody) == true) {
 				GeneralResponseMessage response(*pbody);
 				delete[] pbody->content;
 				delete pbody;
@@ -327,7 +334,8 @@ int Connection::do_connectAndAuthorize() {
 /**
  * register terminal
  */
-int Connection::registerTerminal(const TerminalRegisterMessage &msg) {
+int Connection::registerTerminal(const TerminalRegisterMessage &msg)
+{
 	ScopeLock lock(&this->mutex_);
 
 	if (this->status_ == CLOSED) {
@@ -337,8 +345,7 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg) {
 	char *buf = msg.toBytes();
 	size_t len = msg.len();
 	PackedMessage packedmsg(YZMSGID_TERMINAL_REGISTER, 0);
-	if (pack_msg(YZMSGID_TERMINAL_REGISTER, buf, ENCRYPTION, len,
-			packedmsg.packets, packedmsg.serial) == false) {
+	if (pack_msg(YZMSGID_TERMINAL_REGISTER, buf, ENCRYPTION, len, packedmsg.packets, packedmsg.serial) == false) {
 		this->disconnect();
 		delete[] buf;
 		return YZ_OUT_OF_MEM;
@@ -350,17 +357,14 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg) {
 	int interval = this->connectRetryIntervalSeconds_;
 	while (retryForever || retryCount <= this->maxConnectRetry_) {
 		msg_body_t *pbody;
-		logcatf("sent msg id = 0x%04x, seq = %u",
-							YZMSGID_TERMINAL_REGISTER, packedmsg.serial);
-		if (this->sendMessageOnceAndWait(interval, packedmsg.serial,
-				packedmsg.packets, &pbody) == true) {
-
+		if (this->sendMessageOnceAndWait(interval, packedmsg.serial, packedmsg.packets, &pbody) == true) {
 			TerminalRegisterResponseMessage response;
 			response.parse(*pbody);
 			delete[] pbody->content;
 			delete pbody;
 			// fixme result definition is not clear enough
-			switch (response.result) {
+			switch (response.result)
+			{
 			case 0:
 				this->authorizationCode_ = response.authorizationCode;
 				return YZ_OK;
@@ -392,7 +396,8 @@ int Connection::registerTerminal(const TerminalRegisterMessage &msg) {
  * return 0 if successfully disconnected
  * return YZ_CON_CLOSED if not connected
  */
-int Connection::disconnect() {
+int Connection::disconnect()
+{
 	ScopeLock lock(&this->mutex_);
 	return do_disconnect();
 }
@@ -401,7 +406,8 @@ int Connection::disconnect() {
  * return 0 if successfully disconnected
  * return YZ_CON_CLOSED if not connected
  */
-int Connection::do_disconnect() {
+int Connection::do_disconnect()
+{
 	// disconnect if connected
 	if (this->status_ != CLOSED) {
 		LOGI("disconnect from " << this->ip_ << ':' << this->port_);
@@ -419,7 +425,8 @@ int Connection::do_disconnect() {
 /**
  * callback when socket reabable, disconnected
  */
-void Connection::sock_cb(struct ev_loop *loop, struct ev_io *w, int revents) {
+void Connection::sock_cb(struct ev_loop *loop, struct ev_io *w, int revents)
+{
 	Connection *connection = static_cast<Connection*>(w->data);
 	ScopeLock lock(&connection->mutex_);
 	if (connection->status_ == CLOSED) {
@@ -440,7 +447,7 @@ void Connection::sock_cb(struct ev_loop *loop, struct ev_io *w, int revents) {
 		} else if (errno == EAGAIN) {
 			break;
 		} else {
-			LOGE("recv on socket " << connection->sockfd_ <<" failed: " << strerror(errno));
+			LOGE("recv on socket " << connection->sockfd_  <<" failed: " << strerror(errno));
 			connection->status_ = CONNECTING;
 			close(connection->sockfd_);
 			break;
@@ -452,7 +459,8 @@ void Connection::sock_cb(struct ev_loop *loop, struct ev_io *w, int revents) {
 /**
  * call when data arrived
  */
-void Connection::dataHandler(const char *data, size_t len) {
+void Connection::dataHandler(const char *data, size_t len)
+{
 	size_t startIdx = 0, endIdx;
 	// this piece of data may contain several packets
 	while (startIdx < len) {
@@ -484,7 +492,7 @@ void Connection::dataHandler(const char *data, size_t len) {
 
 			// trying to parse the message
 			msg_serialized_message_t serialized;
-			serialized.data = (MSG_BYTE*) (this->buffer_.c_str());
+			serialized.data = (MSG_BYTE*)(this->buffer_.c_str());
 			serialized.length = this->buffer_.size();
 			msg_message_t msg;
 			if (deserialize(serialized, msg) == true) {
@@ -494,7 +502,7 @@ void Connection::dataHandler(const char *data, size_t len) {
 				unsigned int len;
 				if (unpack_msg(msg, msgid, msgSerial, &data, len) == true) {
 					msg_body_t *body = new msg_body_t();
-					body->content = (MSG_BYTE*) data;
+					body->content = (MSG_BYTE*)data;
 					body->length = len;
 					messageHandler(msgid, msgSerial, body);
 				}
@@ -509,8 +517,8 @@ void Connection::dataHandler(const char *data, size_t len) {
 /**
  * call when a message arrived, called in datahandler
  */
-void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial,
-		msg_body *body) {
+void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *body)
+{
 	LOGI("recieved message " << msgid);
 	this->latestPacketRecievedTime_ = time(NULL);
 	ev_timer_again(this->loop_, &this->evtimer_);
@@ -519,10 +527,7 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial,
 	if (responseMsgIdSet.count(msgid) != 0) {
 		MSG_WORD targetSerial;
 		MSG_SET_WORD(targetSerial, body->content[0], body->content[1]);
-		logcatf("received response id = 0x%04x, seq = %u, response seq = %u",
-				msgid, msgSerial, targetSerial);
-		map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.find(
-				targetSerial);
+		map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.find(targetSerial);
 		if (iter != this->msgBuffer_.end()) {
 			iter->second = body;
 			pthread_cond_broadcast(&this->cond_);
@@ -533,22 +538,19 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial,
 	} else {
 		string response;
 		MSG_WORD responseMsgid;
-		if (this->messageHandler_ != NULL
-				&& this->messageHandler_(*this, msgid, msgSerial, *body,
-						&responseMsgid, &response) == true) {
-			this->sendMessage(responseMsgid, response.c_str(),
-					response.length());
+		if (this->messageHandler_ != NULL &&
+				this->messageHandler_(*this, msgid, msgSerial, *body, &responseMsgid, &response) == true) {
+			this->sendMessage(responseMsgid, response.c_str(), response.length());
 		}
 	}
 	delete[] body->content;
 	delete body;
 }
 
-bool Connection::sendMessageOnceAndWait(int timeoutseconds, MSG_WORD msgSerial,
-		const std::vector<msg_serialized_message_t> &packets,
-		msg_body_t **pmsg) {
-	for (vector<msg_serialized_message_t>::const_iterator iter =
-			packets.begin(); iter != packets.end(); ++iter) {
+bool Connection::sendMessageOnceAndWait(int timeoutseconds, MSG_WORD msgSerial, const std::vector<msg_serialized_message_t> &packets, msg_body_t **pmsg)
+{
+	for (vector<msg_serialized_message_t>::const_iterator iter = packets.begin();
+			iter != packets.end(); ++iter) {
 		if (::sendAll(this->sockfd_, iter->data, iter->length, 0) != 0) {
 			int error = errno;
 			LOGE("send failed " << strerror(errno));
@@ -570,12 +572,11 @@ bool Connection::sendMessageOnceAndWait(int timeoutseconds, MSG_WORD msgSerial,
  * YZ_SOCK_ERROR rarely happens, maybe memory is insufficient
  *
  */
-int Connection::sendMessageAndWait(MSG_WORD msgid, const char *content,
-		size_t len, msg_body_t **pbody, bool critical/* = false*/) {
+int Connection::sendMessageAndWait(MSG_WORD msgid, const char *content, size_t len, msg_body_t **pbody, bool critical/* = false*/)
+{
 
 	PackedMessage *packedmsg = new PackedMessage(msgid, 0);
-	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg->packets,
-			packedmsg->serial) == false) {
+	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg->packets, packedmsg->serial) == false) {
 		delete packedmsg;
 		return YZ_OUT_OF_MEM;
 	}
@@ -592,21 +593,18 @@ int Connection::sendMessageAndWait(MSG_WORD msgid, const char *content,
 	if (ret != 0 && critical == true) {
 		this->pendingMsgs_.push_back(packedmsg);
 	} else {
-		logcatf("successfully sent msg id = 0x%04x, seq = %u", msgid,
-				packedmsg->serial);
 		delete packedmsg;
 	}
 	return ret;
 }
 
-int Connection::do_sendMessageAndWait(const PackedMessage &msg,
-		msg_body_t **pbody) {
+int Connection::do_sendMessageAndWait(const PackedMessage &msg, msg_body_t **pbody)
+{
 	bool retryForever = this->maxConnectRetry_ <= 0 ? true : false;
 	int retryCount = 1;
 	int interval = this->messageRetryIntervalSeconds_;
 	while (retryForever || retryCount <= this->maxConnectRetry_) {
-		if (this->sendMessageOnceAndWait(interval, msg.serial, msg.packets,
-				pbody) == true) {
+		if (this->sendMessageOnceAndWait(interval, msg.serial, msg.packets, pbody) == true) {
 			return YZ_OK;
 		} else {
 			++retryCount;
@@ -623,15 +621,14 @@ int Connection::do_sendMessageAndWait(const PackedMessage &msg,
 	return YZ_CON_TIMEOUT;
 }
 
-void Connection::sendMessage(MSG_WORD msgid, const char *content, size_t len) {
+void Connection::sendMessage(MSG_WORD msgid, const char *content, size_t len)
+{
 	PackedMessage packedmsg(msgid, 0);
-	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg.packets,
-			packedmsg.serial) == false) {
+	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg.packets, packedmsg.serial) == false) {
 		return;
 	}
-	for (vector<msg_serialized_message_t>::const_iterator iter =
-			packedmsg.packets.begin(); iter != packedmsg.packets.end();
-			++iter) {
+	for (vector<msg_serialized_message_t>::const_iterator iter = packedmsg.packets.begin();
+			iter != packedmsg.packets.end(); ++iter) {
 		if (::sendAll(this->sockfd_, iter->data, iter->length, 0) != 0) {
 			break;
 		}
@@ -642,18 +639,17 @@ void Connection::sendMessage(MSG_WORD msgid, const char *content, size_t len) {
 /**
  * wait message, return pointer on success, or NULL
  */
-msg_body_t *Connection::waitMessage(MSG_WORD msgSerial, int timeoutseconds) {
+msg_body_t *Connection::waitMessage(MSG_WORD msgSerial, int timeoutseconds)
+{
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	struct timespec outtime;
 	outtime.tv_nsec = 0;
 	outtime.tv_sec = now.tv_sec + timeoutseconds;
 
-	map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.insert(
-			pair<MSG_WORD, msg_body_t*>(msgSerial, NULL)).first;
+	map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.insert(pair<MSG_WORD, msg_body_t*>(msgSerial, NULL)).first;
 	int error = 0;
-	while (iter->second == NULL && this->status_ != CLOSED
-			&& this->status_ != CONNECTING && error != ETIMEDOUT) {
+	while (iter->second == NULL && this->status_ != CLOSED && this->status_ != CONNECTING && error != ETIMEDOUT) {
 		error = pthread_cond_timedwait(&this->cond_, &this->mutex_, &outtime);
 		iter = this->msgBuffer_.find(msgSerial);
 	}
@@ -663,18 +659,18 @@ msg_body_t *Connection::waitMessage(MSG_WORD msgSerial, int timeoutseconds) {
 	return msg;
 }
 
+
+
 /**
  * callback when timer comes
  */
-void Connection::timer_cb(struct ev_loop *loop, struct ev_timer *w,
-		int revents) {
+void Connection::timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents)
+{
 	Connection *connection = static_cast<Connection*>(w->data);
 	ScopeLock lock(&connection->mutex_);
 	if (connection->status_ == CONNECTED_AUTHORIZED) {
 		time_t now = time(NULL);
-		if (now - connection->latestPacketRecievedTime_
-				> connection->heartbeatDeadCount_
-						* connection->heartbeatIntervalSeconds_) {
+		if (now - connection->latestPacketRecievedTime_ > connection->heartbeatDeadCount_ * connection->heartbeatIntervalSeconds_) {
 			connection->status_ = CONNECTING;
 			pthread_cond_broadcast(&connection->cond_);
 		} else {
@@ -690,11 +686,11 @@ void Connection::timer_cb(struct ev_loop *loop, struct ev_timer *w,
 /**
  * start ev watcher
  */
-void Connection::startEv() {
+void Connection::startEv()
+{
 	stopEv();
 	ev_io_init(&this->evwatcher_, sock_cb, this->sockfd_, EV_READ);
-	ev_timer_init(&this->evtimer_, timer_cb, this->heartbeatIntervalSeconds_,
-			this->heartbeatIntervalSeconds_);
+	ev_timer_init(&this->evtimer_, timer_cb, this->heartbeatIntervalSeconds_, this->heartbeatIntervalSeconds_);
 	ev_io_start(loop_, &this->evwatcher_);
 	ev_timer_start(loop_, &this->evtimer_);
 }
@@ -702,22 +698,26 @@ void Connection::startEv() {
 /**
  * stop ev watcher
  */
-void Connection::stopEv() {
+void Connection::stopEv()
+{
 	ev_io_stop(this->loop_, &this->evwatcher_);
 	ev_timer_stop(this->loop_, &this->evtimer_);
 }
 
-void thread_exit_handler(int sig) {
+void thread_exit_handler(int sig)
+{
 	pthread_exit(0);
 }
 
-void *Connection::reconnectWorker(void *param) {
+void *Connection::reconnectWorker(void *param)
+{
 	struct sigaction actions;
 	memset(&actions, 0, sizeof(actions));
 	sigemptyset(&actions.sa_mask);
 	actions.sa_flags = 0;
 	actions.sa_handler = thread_exit_handler;
-	sigaction(SIGUSR1, &actions, NULL);
+	sigaction(SIGUSR1,&actions,NULL);
+
 
 	Connection *conn = static_cast<Connection*>(param);
 	ScopeLock lock(&conn->mutex_);
@@ -731,7 +731,8 @@ void *Connection::reconnectWorker(void *param) {
 				int ret = conn->do_connectAndAuthorize();
 				if (conn->status_ < CONNECTED && conn->closedHandler_ != NULL) {
 					conn->closedHandler_(*conn);
-				}LOGD("reconnect " << ret << " " << conn->status_);
+				}
+				LOGD("reconnect " << ret << " " << conn->status_);
 				conn->needReauthorization_ = ret == 0 || ret == YZ_DUP_LOGIN;
 			} else {
 				// fixme need reconnect or not
@@ -745,4 +746,32 @@ void *Connection::reconnectWorker(void *param) {
 	}
 	return NULL;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
