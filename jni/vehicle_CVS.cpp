@@ -21,6 +21,9 @@ using namespace std;
 		Connection &conn = *g_conn_manager.getConnection(0);
 		conn.setAuthorizationCode(authCode);
 		int ret = conn.connectAndAuthorize();
+		if (ret == 0){
+			//TODO
+		}
 		return ret;
 	} else {
 		return YZ_CON_CLOSED;

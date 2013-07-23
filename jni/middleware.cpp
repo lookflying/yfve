@@ -47,6 +47,7 @@ jobject getNewObject(JNIEnv *env, const char* name) {
 	jclass cls = env->FindClass(name);
 	return env->AllocObject(cls);
 }
+
 bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 		const msg_body_t &msg, MSG_WORD *responseMsgid, string *response) {
 	logcatf("got message id = %u size = %u", msgid, msg.length);
@@ -84,7 +85,8 @@ bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 	return true; //若返回false则不发送应答
 }
 
-void connClosedHandler(const Connection &conn) {
+void logStateCallBack(string simcardnum, long userId, string authCode,
+		int state) {
 	if (g_jvm != NULL && g_listen_obj != NULL) {
 		JNIEnv *env = NULL;
 		jclass cls = NULL;
@@ -95,22 +97,27 @@ void connClosedHandler(const Connection &conn) {
 				mid = env->GetMethodID(cls, "yz_3_loginstatecallback",
 						"(Ljava/lang/String;JLjava/lang/String;I)V");
 				if (mid != NULL) {
-					env->CallVoidMethod(g_listen_obj, mid);
+					jstring jsimcardnum = string2jstring(env, simcardnum);
+					jlong juserId = (jlong) userId;
+					jstring jauthCode = string2jstring(env, authCode);
+					jint jstate = (jint) state;
+					env->CallVoidMethod(g_listen_obj, mid, jsimcardnum, juserId,
+							jauthCode, jstate);
 				}
 			}
-//			if (g_jvm->DetachCurrentThread() != JNI_OK) {
-//				logcatf("middleware", "DetachCurrentThread fail");
-//			}
 		}
 	}
 }
 
-void startMiddleware(const std::string server_ip, const int server_port) {
-	MSG_WORD platformResponseMsgIds[] = {
-		YZMSGID_GENERAL_PLATFORM_RESPONSE,
-		YZMSGID_TERMINAL_REGISTER_RESPONSE,
+void connClosedHandler(const Connection &conn) {
+	logStateCallBack("", 0, "", 1);
+}
 
-			};
+void startMiddleware(const std::string server_ip, const int server_port) {
+	MSG_WORD platformResponseMsgIds[] = { YZMSGID_GENERAL_PLATFORM_RESPONSE,
+			YZMSGID_TERMINAL_REGISTER_RESPONSE,
+
+	};
 	Connection::responseMsgIdSet.insert(platformResponseMsgIds,
 			platformResponseMsgIds
 					+ sizeof(platformResponseMsgIds)
@@ -147,7 +154,7 @@ void unsetListen(JNIEnv *env) {
 	env->DeleteGlobalRef(g_listen_obj);
 }
 
-void unsetCls(JNIEnv *env){
+void unsetCls(JNIEnv *env) {
 	env->DeleteGlobalRef(g_poilist_cls);
 	env->DeleteGlobalRef(g_tmc_struct_cls);
 	env->DeleteGlobalRef(g_weather_struct_cls);
