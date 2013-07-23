@@ -1,52 +1,52 @@
 package vehicle_CVS;
 public class LocationStruct_CVS {
-	long mtime;
-	double mlongitude;
-	double mlatitude;
-	float mspeed;
-	float mdirection;
-	float maltitude;
-	int msatnum;
-	int malarmstatus;
+	long time;
+	double longitude;
+	double latitude;
+	float speed;
+	float direction;
+	float altitude;
+	int satnum;
+	int alarmstatus;
 	
 	
 	public void setTime(long time)
 	{
-		mtime = time;
+		this.time = time;
 	}
 	
 	public void setLongitude(double longitude)
 	{
-		mlongitude = longitude;
+		this.longitude = longitude;
 	}
 	
 	public void setLatitude(double latitude)
 	{
-		mlatitude = latitude;
+		this.latitude = latitude;
 	}
 	
 	public void setSpeed(float speed)
 	{
-		mspeed = speed;
+		this.speed = speed;
 	}
 	
 	public void setDirection(float direction)
 	{
-		mdirection = direction;
+		this.direction = direction;
 	}
 	
 	public void setAltitude(float altitude)
 	{
-		maltitude = altitude;
+		this.altitude = altitude;
 	}
 	
 	public void setSatnum(int satnum)
 	{
-		msatnum = satnum;
+		this.satnum = satnum;
 	}
 	
 	public void setAlarmType(int alarmstatus)
 	{
-		malarmstatus = alarmstatus;
+		this.alarmstatus = alarmstatus;
 	}
 }
