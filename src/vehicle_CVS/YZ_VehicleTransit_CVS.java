@@ -130,7 +130,7 @@ public class YZ_VehicleTransit_CVS {
 	 * @param vehicleTransitListen
 	 *            事件监听
 	 */
-	public static native int yz_2_init(String terminalID, String cvsIp,
+	public static native void yz_2_init(String terminalID, String cvsIp,
 			int cvsPort, VehicleTransitListen_DSP vehicleTransitListen);
 
 	/**
