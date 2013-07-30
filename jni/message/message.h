@@ -184,4 +184,10 @@ std::string big_endian(MSG_WORD word);
  */
 std::string big_endian(MSG_DWORD dword);
 
+/*
+ * 字符串转换为数字字节数组
+ */
+void string2num(std::string str, MSG_BYTE** numbers);
+
+
 #endif

@@ -3,6 +3,7 @@
 #include <string>
 #include <map>
 #include <cstdio>
+#include <cstdlib>
 using namespace std;
 
 /*终端手机号*/
@@ -403,5 +404,16 @@ bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, MSG_WORD &msg_seq,
 		return true;
 	}
 	return false;
+}
+
+void string2num(string str, MSG_BYTE** numbers){
+	*numbers = new MSG_BYTE[str.size()];
+	MSG_BYTE* ptr = *numbers;
+	char buf[2];
+	buf[1] = 0;
+	for (unsigned int i = 0; i < str.size(); ++i){
+		buf[0] = str.at(i);
+		ptr[i] = (MSG_BYTE)atoi(buf);
+	}
 }
 

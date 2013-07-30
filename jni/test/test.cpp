@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "../message/message.h"
-#include "../middleware.h"
 #include <string>
 #include <cstring>
 #include <cstdlib>
@@ -171,6 +170,15 @@ TEST(pack_test, pack_unpack_message){
 	EXPECT_EQ(large_msg_seq, unpacked_seq);
 }
 
+TEST(jni_test, string2num){
+	string a = "0123456";
+	MSG_BYTE* ptr;
+	string2num(a, &ptr);
+	for (unsigned int i = 0; i < a.size(); ++i){
+		EXPECT_EQ(i, ptr[i]);
+	}
+
+}
 /*
 TEST(jni_test, string_char_converter){
 	char* cptr = new (nothrow) char[(int)'z' - (int)'A' + 1];
