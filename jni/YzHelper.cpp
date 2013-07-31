@@ -159,8 +159,8 @@ string locationStruct2string(JNIEnv* env, jobject loc) {
 	string message = "";
 	message += big_endian(upload_alarm_status);
 	message += big_endian(upload_status);
-	message += big_endian(upload_longitude);
 	message += big_endian(upload_latitude);
+	message += big_endian(upload_longitude);
 	message += big_endian(upload_altitude);
 	message += big_endian(upload_speed);
 	message += big_endian(upload_direction);
