@@ -22,6 +22,15 @@ void logcatf(const char* fmt, ...) {
 	__android_log_write(ANDROID_LOG_DEBUG, "logcatf", logcat_buf);
 }
 
+void logcat_hex(const char* buf, unsigned int len){
+	int pos = 0;
+	for (unsigned int i = 0; i < len; ++i){
+		snprintf(logcat_buf + 3 * i, sizeof(logcat_buf) - 3 * i, "%02x ", buf[i]);
+	}
+	__android_log_write(ANDROID_LOG_DEBUG, "logcatf", logcat_buf);
+
+}
+
 /**
  * jstring to string
  */

@@ -62,8 +62,11 @@ typedef struct msg_serialized_message{
 #define MSG_IS_ENCRYPT(msg_property) \
 	(msg_property & 0x1c00)
 
+/*
+ * 高4位开始放
+ */
 #define MSG_BYTE2BCD(byte0, byte1, bcd) \
-	((bcd) = ((MSG_BCD)((byte0) & 0x0f) | (MSG_BCD)(((byte1) & 0x0f)<<4)))
+	((bcd) = ((MSG_BCD)((byte1) & 0x0f) | (MSG_BCD)(((byte0) & 0x0f)<<4)))
 
 
 /*

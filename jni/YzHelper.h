@@ -59,6 +59,10 @@
  */
 void logcatf(const char* fmt, ...);
 /**
+ * print hex
+ */
+void logcat_hex(const char* buf, unsigned int len);
+/**
  * jstring to string
  */
 std::string jstring2string(JNIEnv* env, jstring jstr);
