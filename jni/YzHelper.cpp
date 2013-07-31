@@ -22,10 +22,11 @@ void logcatf(const char* fmt, ...) {
 	__android_log_write(ANDROID_LOG_DEBUG, "logcatf", logcat_buf);
 }
 
-void logcat_hex(const char* buf, unsigned int len){
+void logcat_hex(const char* buf, unsigned int len) {
 	int pos = 0;
-	for (unsigned int i = 0; i < len; ++i){
-		snprintf(logcat_buf + 3 * i, sizeof(logcat_buf) - 3 * i, "%02x ", buf[i]);
+	for (unsigned int i = 0; i < len; ++i) {
+		snprintf(logcat_buf + 3 * i, sizeof(logcat_buf) - 3 * i, "%02x ",
+				buf[i]);
 	}
 	__android_log_write(ANDROID_LOG_DEBUG, "logcatf", logcat_buf);
 
@@ -168,12 +169,12 @@ string locationStruct2string(JNIEnv* env, jobject loc) {
 	return message;
 }
 
-jint getIntField(JNIEnv *env, jclass cls, jobject obj,const char* field) {
+jint getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "I");
 	return env->GetIntField(obj, field_id);
 }
 
-jlong getLongField(JNIEnv *env, jclass cls, jobject obj,const char* field) {
+jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "J");
 	return env->GetLongField(obj, field_id);
 }
@@ -191,26 +192,36 @@ string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
 			"electricCircuit");
 	jint doorLocked = getIntField(env, cls, vehicle_data, "doorLocked");
 	jlong mileage = getLongField(env, cls, vehicle_data, "mileage");
-	message += big_endian((MSG_DWORD)0);//报警
+	message += big_endian((MSG_DWORD) 0); //报警
 	MSG_DWORD status = 0;
-	status =(MSG_WORD) ((ACCSwitch & 0x0001)
-						| (located & 0x0002)
-						| (operating & 0x0010)
-						| (oilCircuit & 0x0400)
-						| (electricCircuit & 0x0800)
-						| (doorLocked & 0x1000));
-	message += big_endian((MSG_DWORD)0);//纬度
-	message += big_endian((MSG_DWORD)0);//经度
-	message += big_endian((MSG_WORD)0);//高程
-	message += big_endian((MSG_WORD)speed);
-	message += big_endian((MSG_WORD)0);//方向
-	message += big_endian((MSG_DWORD)0);//时间前4个字节
-	message += big_endian((MSG_WORD)0);//时间前2个字节
-	message += (MSG_BYTE)0x01;//里程
-	message += (MSG_BYTE)4;
-	message += big_endian((MSG_DWORD)mileage);
-	message += (MSG_BYTE)0x02;
-	message += (MSG_BYTE)2;
-	message += big_endian((MSG_WORD)oilLevel);
+	status = (MSG_WORD) ((ACCSwitch & 0x0001) | (located & 0x0002)
+			| (operating & 0x0010) | (oilCircuit & 0x0400)
+			| (electricCircuit & 0x0800) | (doorLocked & 0x1000));
+	message += big_endian((MSG_DWORD) 0); //纬度
+	message += big_endian((MSG_DWORD) 0); //经度
+	message += big_endian((MSG_WORD) 0); //高程
+	message += big_endian((MSG_WORD) speed);
+	message += big_endian((MSG_WORD) 0); //方向
+	message += big_endian((MSG_DWORD) 0); //时间前4个字节
+	message += big_endian((MSG_WORD) 0); //时间前2个字节
+	message += (MSG_BYTE) 0x01; //里程
+	message += (MSG_BYTE) 4;
+	message += big_endian((MSG_DWORD) mileage);
+	message += (MSG_BYTE) 0x02;
+	message += (MSG_BYTE) 2;
+	message += big_endian((MSG_WORD) oilLevel);
 	return message;
+}
+
+string jbyteArray2string(JNIEnv *env, jbyteArray array) {
+	unsigned int len = env->GetArrayLength(array);
+	jbyte *buf = new (nothrow) jbyte[len + 1];
+	if (buf == NULL) {
+		return string(1, (char) 0);
+	}
+	env->GetByteArrayRegion(array, 0, len, buf);
+	buf[len] = 0;
+	string str((char*)buf, len + 1);
+	delete[] buf;
+	return str;
 }

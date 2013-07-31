@@ -576,6 +576,7 @@ bool Connection::sendMessageOnceAndWait(int timeoutseconds, MSG_WORD msgSerial, 
 			LOGE("send failed " << strerror(errno));
 			return false;
 		}
+//		logcat_hex((char*)iter->data, iter->length);
 	}
 	*pmsg = this->waitMessage(msgSerial, timeoutseconds);
 	if (*pmsg == NULL) {

@@ -1,5 +1,6 @@
 package vehicle_CVS;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,8 +51,8 @@ public class YZ_VehicleTransit_CVS {
 	/**
 	 * 车辆状态上传 函数类型：同步函数
 	 * 
-	 * @param simcardnum（忽略）
-	 *            卡对应的电话号码
+	 * @param simcardnum
+	 *            （忽略） 卡对应的电话号码
 	 * @param vehiclestatus
 	 *            车辆状态， 0为空闲中，1为工作中，2为保养中
 	 * @return 0为成功，非0为失败，根据具体值对应错误类型，如果有多个错误则返回最新的一个错误值
@@ -172,6 +173,8 @@ public class YZ_VehicleTransit_CVS {
 	/**
 	 * 终端注册 函数类型：同步
 	 * 
+	 * @param simcardnum
+	 *            手机号
 	 * @param provinceId
 	 *            省域编号
 	 * @param cityId
@@ -190,11 +193,27 @@ public class YZ_VehicleTransit_CVS {
 	 *            注册成功返回得授权码
 	 * @return 成功返回0，失败返回错误码
 	 */
-	public static native int yz_2_register(int provinceId, int cityId,
-			String makerId, String terminalModel, String terminalId,
-			int plateColor, String plateNum);
+	public static int yz_2_register(String simcardnum, int provinceId,
+			int cityId, String makerId, String terminalModel,
+			String terminalId, int plateColor, String plateNum) {
+		byte[] plateNumArray;
+		try {
+			plateNumArray = plateNum.getBytes("GBK");
+		} catch (UnsupportedEncodingException e) {
+			return 9997;
+		}
+		return do_register(simcardnum, provinceId, cityId, makerId,
+				terminalModel, terminalId, plateColor, plateNumArray);
+
+	}
+
+	private static native int do_register(String simcardnum, int provinceId,
+			int cityId, String makerId, String terminalModel,
+			String terminalId, int plateColor, byte[] plateNum);
+
 	/**
 	 * 获取授权码， 须在鉴权后调用。
+	 * 
 	 * @return 返回授权码
 	 */
 	public static native String yz_2_getAuthCode();
@@ -205,8 +224,7 @@ public class YZ_VehicleTransit_CVS {
 	public static native int yz_2_deregister();
 
 	/**
-	 * 辅助函数，
-	 * 为解决findclass返回NULL的问题，在init前需要调用此函数，将回调函数中将会用到的java类传入
+	 * 辅助函数， 为解决findclass返回NULL的问题，在init前需要调用此函数，将回调函数中将会用到的java类传入
 	 */
 	public static void yz_2_prepare_class() {
 		List<POIStruct_DSP> poiList = new ArrayList<POIStruct_DSP>();

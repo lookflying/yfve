@@ -50,8 +50,8 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				int ret = YZ_VehicleTransit_CVS.yz_2_register(0, 0, "", "", "",
-						0, "");
+				int ret = YZ_VehicleTransit_CVS.yz_2_register("13816429129", 0, 0, "", "", "",
+						0, "苏C0000");
 				text1.setText(String.format("register return value = %d", ret));
 				String authCode = YZ_VehicleTransit_CVS.yz_2_getAuthCode();
 				text2.setText(String.format("authcode = %s", authCode));
@@ -74,7 +74,7 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				int ret = YZ_VehicleTransit_CVS.yz_2_userlogin("12345678901",
+				int ret = YZ_VehicleTransit_CVS.yz_2_userlogin("13816429129",
 						YZ_VehicleTransit_CVS.yz_2_getAuthCode(), "", null);
 				text1.setText(String.format("login return value = %d", ret));
 			}
@@ -97,6 +97,11 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				LocationStruct_CVS loc = new LocationStruct_CVS();
+//				loc.setLatitude(31.177326);
+//				loc.setLongitude(121.455665);
+				loc.setLatitude(30.87638);
+				loc.setLongitude(121.38088);
+				loc.setTime(System.currentTimeMillis());
 				int ret = YZ_VehicleTransit_CVS.yz_3_gpsupload("", loc);
 				text1.setText(String
 						.format("gps upload return value = %d", ret));

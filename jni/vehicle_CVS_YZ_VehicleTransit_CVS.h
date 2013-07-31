@@ -105,11 +105,11 @@ JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_13_1modifyMe
 
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
- * Method:    yz_2_register
- * Signature: (IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)I
+ * Method:    do_register
+ * Signature: (Ljava/lang/String;IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;I[B)I
  */
-JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1register
-  (JNIEnv *, jclass, jint, jint, jstring, jstring, jstring, jint, jstring);
+JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_do_1register
+  (JNIEnv *, jclass, jstring, jint, jint, jstring, jstring, jstring, jint, jbyteArray);
 
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS

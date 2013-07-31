@@ -101,4 +101,8 @@ jint getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field);
 
  */
 jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field);
+/**
+ * 将字节数组转换为string
+ */
+std::string jbyteArray2string(JNIEnv *env, jbyteArray array);
 #endif /* YZERR_H_ */

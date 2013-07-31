@@ -172,16 +172,18 @@ using namespace std;
 		JNIEnv * env, jclass cls, jstring) {
 	return YZ_OK;
 }
-
-/**
+/*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
- * Method:    yz_2_register
- * Signature: (IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)I
- */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1register(
-		JNIEnv *env, jclass cls, jint provinceId, jint cityId, jstring makerId,
-		jstring terminalModel, jstring terminalId, jint plateColor,
-		jstring plateNum) {
+ * Method:    do_register
+ * Signature: (Ljava/lang/String;IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;I[B)I
+ */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_do_1register(
+		JNIEnv *env, jclass cls, jstring simcardnum, jint provinceId,
+		jint cityId, jstring makerId, jstring terminalModel, jstring terminalId,
+		jint plateColor, jbyteArray plateNum) {
 	if (g_working) {
+		string csimcardnum = jstring2string(env, simcardnum);
+		set_global_phone_num((MSG_BYTE*)csimcardnum.c_str(),
+				csimcardnum.size());
 		TerminalRegisterMessage msg;
 		msg.provinceId = (MSG_WORD) provinceId;
 		msg.cityId = (MSG_WORD) cityId;
@@ -192,7 +194,7 @@ using namespace std;
 		string cterminalId = jstring2string(env, terminalId);
 		string2bytes(cterminalId, msg.terminalId, sizeof(msg.terminalId));
 		msg.color = (MSG_BYTE) plateColor;
-		msg.carPlate = jstring2string(env, plateNum);
+		msg.carPlate = jbyteArray2string(env, plateNum);
 		Connection &conn = *g_conn_manager.getConnection(0);
 
 		int ret = conn.connect();
