@@ -179,6 +179,12 @@ jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
 	return env->GetLongField(obj, field_id);
 }
 
+jdouble getDoubleField(JNIEnv *env, jclass cls, jobject obj,
+		const char* field) {
+	jfieldID field_id = env->GetFieldID(cls, field, "D");
+	return env->GetDoubleField(obj, field_id);
+}
+
 string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
 	string message = "";
 	jclass cls = env->GetObjectClass(vehicle_data);
@@ -194,16 +200,63 @@ string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
 	jlong mileage = getLongField(env, cls, vehicle_data, "mileage");
 	message += big_endian((MSG_DWORD) 0); //报警
 	MSG_DWORD status = 0;
-	status = (MSG_WORD) ((ACCSwitch & 0x0001) | (located & 0x0002)
+	status = (MSG_DWORD) ((ACCSwitch & 0x0001) | (located & 0x0002)
 			| (operating & 0x0010) | (oilCircuit & 0x0400)
 			| (electricCircuit & 0x0800) | (doorLocked & 0x1000));
-	message += big_endian((MSG_DWORD) 0); //纬度
-	message += big_endian((MSG_DWORD) 0); //经度
+	message += big_endian(status);
+	MSG_DWORD upload_longitude;
+	MSG_DWORD upload_latitude;
+	//get latitude
+	jdouble latitude = getDoubleField(env, cls, vehicle_data, "latitude");
+	upload_latitude = static_cast<MSG_DWORD>(latitude * 1000000);
+	//get longitude
+	jdouble longitude = getDoubleField(env, cls, vehicle_data, "longitude");
+	upload_longitude = static_cast<MSG_DWORD>(longitude * 1000000);
+
+	//get time
+	MSG_BCD upload_time[6];
+	jlong time = getLongField(env, cls, vehicle_data, "time");
+	time_t t = static_cast<time_t>(time / 1000);
+	struct tm * ptm;
+	setenv("TZ", "Asia/Shanghai", 1);
+	tzset();
+	ptm = localtime(&t);
+	unsigned char byte0, byte1;
+	int year = ptm->tm_year % 100;
+	int month = ptm->tm_mon + 1;
+	int day = ptm->tm_mday;
+	int hour = ptm->tm_hour;
+	int minute = ptm->tm_min;
+	int sec = ptm->tm_sec;
+	byte0 = (MSG_BYTE) ((year / 10) & 0xff);
+	byte1 = (MSG_BYTE) ((year % 10) & 0xff);
+	MSG_BYTE2BCD(byte0, byte1, upload_time[0]);
+	byte0 = (MSG_BYTE) ((month / 10) & 0xff);
+	byte1 = (MSG_BYTE) ((month % 10) & 0xff);
+	MSG_BYTE2BCD(byte0, byte1, upload_time[1]);
+	byte0 = (MSG_BYTE) ((day / 10) & 0xff);
+	byte1 = (MSG_BYTE) ((day % 10) & 0xff);
+	MSG_BYTE2BCD(byte0, byte1, upload_time[2]);
+	byte0 = (MSG_BYTE) ((hour / 10) & 0xff);
+	byte1 = (MSG_BYTE) ((hour % 10) & 0xff);
+	MSG_BYTE2BCD(byte0, byte1, upload_time[3]);
+	byte0 = (MSG_BYTE) ((minute / 10) & 0xff);
+	byte1 = (MSG_BYTE) ((minute % 10) & 0xff);
+	MSG_BYTE2BCD(byte0, byte1, upload_time[4]);
+	byte0 = (MSG_BYTE) ((sec / 10) & 0xff);
+	byte1 = (MSG_BYTE) ((sec % 10) & 0xff);
+	MSG_BYTE2BCD(byte0, byte1, upload_time[5]);
+
+//	message += big_endian((MSG_DWORD) 0); //纬度
+//	message += big_endian((MSG_DWORD) 0); //经度
+	message += big_endian(upload_latitude);
+	message += big_endian(upload_longitude);
 	message += big_endian((MSG_WORD) 0); //高程
 	message += big_endian((MSG_WORD) speed);
 	message += big_endian((MSG_WORD) 0); //方向
-	message += big_endian((MSG_DWORD) 0); //时间前4个字节
-	message += big_endian((MSG_WORD) 0); //时间前2个字节
+	message.append((char*) &upload_time[0], 6);
+//	message += big_endian((MSG_DWORD) 0); //时间前4个字节
+//	message += big_endian((MSG_WORD) 0); //时间后2个字节
 	message += (MSG_BYTE) 0x01; //里程
 	message += (MSG_BYTE) 4;
 	message += big_endian((MSG_DWORD) mileage);
@@ -221,7 +274,7 @@ string jbyteArray2string(JNIEnv *env, jbyteArray array) {
 	}
 	env->GetByteArrayRegion(array, 0, len, buf);
 	buf[len] = 0;
-	string str((char*)buf, len + 1);
+	string str((char*) buf, len + 1);
 	delete[] buf;
 	return str;
 }

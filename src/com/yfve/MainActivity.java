@@ -50,8 +50,8 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				int ret = YZ_VehicleTransit_CVS.yz_2_register("13816429129", 0, 0, "", "", "",
-						0, "苏C0000");
+				int ret = YZ_VehicleTransit_CVS.yz_2_register("13816429129", 0,
+						0, "", "", "", 0, "苏C0000");
 				text1.setText(String.format("register return value = %d", ret));
 				String authCode = YZ_VehicleTransit_CVS.yz_2_getAuthCode();
 				text2.setText(String.format("authcode = %s", authCode));
@@ -97,8 +97,8 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				LocationStruct_CVS loc = new LocationStruct_CVS();
-//				loc.setLatitude(31.177326);
-//				loc.setLongitude(121.455665);
+				// loc.setLatitude(31.177326);
+				// loc.setLongitude(121.455665);
 				loc.setLatitude(30.87638);
 				loc.setLongitude(121.38088);
 				loc.setTime(System.currentTimeMillis());
@@ -113,9 +113,21 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				VehicleDataStruct_CVS data = new VehicleDataStruct_CVS();
+				VehicleDataStruct_CVS vdata = new VehicleDataStruct_CVS();
+				vdata.setSpeed(5);
+				vdata.setOilLevel(200);
+				vdata.setACCSwitch(1);
+				vdata.setLocated(1);
+				vdata.setOilCircuit(1);
+				vdata.setElectricCircuit(1);
+				vdata.setDoorLocked(1);
+				vdata.setOperating(1);
+				vdata.setMileage(600);
+				vdata.setLatitude(30.87638);
+				vdata.setLongitude(121.38088);
+				vdata.setTime(System.currentTimeMillis());
 				int ret = YZ_VehicleTransit_CVS.yz_3_sendvehicledata(
-						"12345678901", data);
+						"12345678901", vdata);
 				text1.setText(String.format(
 						"send vehicle data return value = %d", ret));
 			}
@@ -135,9 +147,9 @@ public class MainActivity extends Activity {
 			}
 
 		});
-		
+
 		button8.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				YZ_VehicleTransit_CVS.yz_2_destroy();
