@@ -33,7 +33,7 @@ public:
 		CONNECTED_AUTHORIZED
 	};
 
-	typedef void (*closedHandler_t)(const Connection &conn);
+	typedef void (*closedHandler_t)(Connection *conn);
 	typedef bool (*messageHandler_t)(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial, const msg_body_t &msg, MSG_WORD *responseMsgid, std::string *response);
 
 	Connection();
@@ -219,6 +219,8 @@ private:
 	static void *reconnectWorker(void *);
 
 	static void *messageHandlerWorker(void *);
+
+	static void *closedHandlerWorker(void *);
 
 	/**
 	 * start ev watcher
