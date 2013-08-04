@@ -3,8 +3,11 @@ package com.yfve;
 import vehicle_CVS.LocationStruct_CVS;
 import vehicle_CVS.VehicleDataStruct_CVS;
 import vehicle_CVS.YZ_VehicleTransit_CVS;
+import android.R.integer;
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -141,7 +144,7 @@ public class MainActivity extends Activity {
 				YZ_VehicleTransit_CVS.yz_2_prepare_class();
 				YZ_VehicleTransit_CVS.yz_2_init("", text5.getText().toString(),
 						Integer.valueOf(text6.getText().toString()),
-						new FakeLinsten());
+						new FakeListener(uiHandler));
 
 				text3.setText("Middleware started");
 			}
@@ -166,4 +169,15 @@ public class MainActivity extends Activity {
 		return true;
 	}
 
+	public static final int LOGIN_ID = 0;
+	public static final String LOGIN_CONTENT = "login";
+	private final Handler uiHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			switch (msg.what) {
+			default:
+				text4.append(msg.getData().getString(LOGIN_CONTENT));
+			}
+		}
+	};
 }

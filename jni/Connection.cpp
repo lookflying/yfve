@@ -34,7 +34,7 @@
 using namespace std;
 
 const int Connection::DEFAULT_MESSAGE_RETRY_INTERVAL_SECONDS = 30;
-const int Connection::DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS = 30;
+const int Connection::DEFAULT_CONNECT_RETRY_INTERVAL_SECONDS = 10;
 const int Connection::DEFAULT_HEARTBEAT_ITNERVAL_SECONDS = 30;
 
 const int ENCRYPTION = 0;
@@ -118,7 +118,7 @@ int Connection::initServerAddr(const std::string &ip, int port)
 	if (this->status_ != CLOSED) {
 		return 1;
 	}
-	LOGD("initialize connection " << this->name_ << " with " << ip << ':' << port);
+	logcatf("initialize connection %s with %s:%d", this->name_.c_str(), ip.c_str(), port);
 	this->ip_ = ip;
 	this->port_ = port;
 
@@ -126,7 +126,7 @@ int Connection::initServerAddr(const std::string &ip, int port)
 	this->servaddr_.sin_family = AF_INET;
 	this->servaddr_.sin_port = htons(this->port_);
 	if (inet_pton(AF_INET, this->ip_.c_str(), &this->servaddr_.sin_addr) != 1) {
-		LOGE("IP address " << this->ip_ << " does not contain a character string representing a valid network address or address family not supported");
+		logcatf("IP address %s does not contain a character string representing a valid network address or address family not supported", this->ip_.c_str());
 		this->addressInited_ = false;
 		return 2;
 	} else {
@@ -144,6 +144,7 @@ int Connection::initServerAddr(const std::string &ip, int port)
 int Connection::connect()
 {
 	ScopeLock lock(&this->mutex_);
+	logcatf("Connection::connect, status is %d, addressInited is %d", this->status_, this->addressInited_ ? 1 : 0);
 	if (this->addressInited_ == false) {
 		return YZ_SOCK_ERROR;
 	}
@@ -169,20 +170,20 @@ int Connection::do_connect(int retry)
 	bool forever = (retry == 0) ? true : false;
 	int retryTime = 1, error = YZ_OK, sockfd = -1;
 	while (forever || retryTime <= retry) {
-		LOGD("try connecting to " << this->ip_ << ':' << this->port_ << " for the " << retryTime << "th time");
+		logcatf("try connecting to %s:%d for the %dth time", this->ip_.c_str(), this->port_, retryTime);
 		++retryTime;
 
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if (sockfd == -1) {
 			error = errno;
-			LOGE("cannot create socket " << strerror(error));
+			logcatf("cannot create socket %s", strerror(error));
 			error = YZ_SOCK_ERROR;
 			break;
 		}
 
 		if (::connect(sockfd, (sockaddr*)&this->servaddr_, sizeof(this->servaddr_)) == -1) {
 			error = errno;
-			LOGE("cannot connect to " << this->ip_ << ':' << this->port_ << ": " << strerror(error));
+			logcatf("cannot connect to %s:%d, %s", this->ip_.c_str(), this->port_, strerror(error));
 			close(sockfd);
 			if (error != ETIMEDOUT) {
 				// should give up, because it makes no sense
@@ -224,6 +225,7 @@ int Connection::connectAndAuthorize()
 {
 	ScopeLock lock(&this->mutex_);
 	int ret = this->do_connectAndAuthorize();
+	logcatf("connectAndAuthorize, result is %d", ret);
 	this->needReauthorization_ = ret == 0 || ret == YZ_DUP_LOGIN;
 	if (ret != 0) {
 		return ret;
@@ -288,7 +290,7 @@ int Connection::do_connectAndAuthorize()
 	}
 
 	if (this->status_ == CONNECTED) {
-		LOGD("start authorizing");
+		logcatf("start authorizing");
 		this->status_ = CONNECTED_AUTHORIZING;
 		PackedMessage packedmsg(YZMSGID_TERMINAL_AUTHORIZE, 0);
 		if (pack_msg(packedmsg.msgid, authorizationCode_.c_str(), ENCRYPTION, authorizationCode_.length(), packedmsg.packets, packedmsg.serial) == false) {
@@ -337,6 +339,8 @@ int Connection::do_connectAndAuthorize()
 int Connection::registerTerminal(const TerminalRegisterMessage &msg)
 {
 	ScopeLock lock(&this->mutex_);
+
+	logcatf("start registeringing terminal, status is %d", this->status_);
 
 	if (this->status_ == CLOSED) {
 		return YZ_CON_CLOSED;
@@ -410,7 +414,7 @@ int Connection::do_disconnect()
 {
 	// disconnect if connected
 	if (this->status_ != CLOSED) {
-		LOGI("disconnect from " << this->ip_ << ':' << this->port_);
+		logcatf("disconnect from %s:%d", this->ip_.c_str(), this->port_);
 
 		ev_io_stop(loop_, &this->evwatcher_);
 		::close(this->sockfd_);
@@ -430,6 +434,7 @@ void Connection::sock_cb(struct ev_loop *loop, struct ev_io *w, int revents)
 	Connection *connection = static_cast<Connection*>(w->data);
 	ScopeLock lock(&connection->mutex_);
 	if (connection->status_ == CLOSED) {
+		logcatf("sock cb, connection closed");
 		return;
 	}
 
@@ -437,17 +442,18 @@ void Connection::sock_cb(struct ev_loop *loop, struct ev_io *w, int revents)
 		char buf[BUF_SIZE];
 		ssize_t ret = recv(connection->sockfd_, buf, sizeof(buf), MSG_DONTWAIT);
 		if (ret > 0) {
-			LOGD("socket " << connection->sockfd_ << " recieved " << ret << " bytes");
+			logcatf("socket %d recieved %d bytes", connection->sockfd_, ret);
 			connection->dataHandler(buf, ret);
 		} else if (ret == 0) {
-			LOGD("socket " << connection->sockfd_ << " closed by peer");
+			logcatf("socket %d closed by peer", connection->sockfd_);
 			connection->status_ = CONNECTING;
 			close(connection->sockfd_);
 			break;
 		} else if (errno == EAGAIN) {
+			logcatf("sock cb, try again");
 			break;
 		} else {
-			LOGE("recv on socket " << connection->sockfd_  <<" failed: " << strerror(errno));
+			logcatf("recv on socket %d failed: %s", connection->sockfd_, strerror(errno));
 			connection->status_ = CONNECTING;
 			close(connection->sockfd_);
 			break;
@@ -507,7 +513,7 @@ void Connection::dataHandler(const char *data, size_t len)
 					messageHandler(msgid, msgSerial, body);
 				}
 			} else {
-				LOGE("fail when seserialize message");
+				logcatf("fail when deserialize message");
 			}
 			this->buffer_.clear();
 		}
@@ -531,7 +537,6 @@ struct MessageHandlerWorkerParam{
  */
 void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *body)
 {
-	LOGI("recieved message " << msgid);
 	this->latestPacketRecievedTime_ = time(NULL);
 	ev_timer_again(this->loop_, &this->evtimer_);
 
@@ -539,6 +544,7 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *bo
 	if (responseMsgIdSet.count(msgid) != 0) {
 		MSG_WORD targetSerial;
 		MSG_SET_WORD(targetSerial, body->content[0], body->content[1]);
+		logcatf("recieved response message, msgid is %d, msgser is %d, targetSerial is %d", msgid, msgSerial, targetSerial);
 		map<MSG_WORD, msg_body_t*>::iterator iter = this->msgBuffer_.find(targetSerial);
 		if (iter != this->msgBuffer_.end()) {
 			iter->second = body;
@@ -546,10 +552,12 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *bo
 			return;
 		} else {
 			// may recieved a heartbeat response packet
+			logcatf("message of no listener recieved, maybe a response packet");
 		}
 		delete[] body->content;
 		delete body;
 	} else {
+		logcatf("recieved message, msgid is %d, msgser is %d", msgid, msgSerial);
 		if (this->messageHandler_ != NULL) {
 			MessageHandlerWorkerParam *param = new MessageHandlerWorkerParam();
 			param->conn = this;
@@ -569,11 +577,12 @@ void Connection::messageHandler(MSG_WORD msgid, MSG_WORD msgSerial, msg_body *bo
 
 bool Connection::sendMessageOnceAndWait(int timeoutseconds, MSG_WORD msgSerial, const std::vector<msg_serialized_message_t> &packets, msg_body_t **pmsg)
 {
+	logcatf("sending message once and wait, timeoutseconds is %d, msgSerial is %d", timeoutseconds, msgSerial);
 	for (vector<msg_serialized_message_t>::const_iterator iter = packets.begin();
 			iter != packets.end(); ++iter) {
 		if (::sendAll(this->sockfd_, iter->data, iter->length, 0) != 0) {
 			int error = errno;
-			LOGE("send failed " << strerror(errno));
+			logcatf("send failed %s", strerror(error));
 			return false;
 		}
 //		logcat_hex((char*)iter->data, iter->length);
@@ -648,6 +657,7 @@ void Connection::sendMessage(MSG_WORD msgid, const char *content, size_t len)
 	if (pack_msg(msgid, content, ENCRYPTION, len, packedmsg.packets, packedmsg.serial) == false) {
 		return;
 	}
+	logcatf("sending message, msgid is %d, msgser is %d", msgid, packedmsg.serial);
 	for (vector<msg_serialized_message_t>::const_iterator iter = packedmsg.packets.begin();
 			iter != packedmsg.packets.end(); ++iter) {
 		if (::sendAll(this->sockfd_, iter->data, iter->length, 0) != 0) {
@@ -689,17 +699,17 @@ void Connection::timer_cb(struct ev_loop *loop, struct ev_timer *w, int revents)
 {
 	Connection *connection = static_cast<Connection*>(w->data);
 	ScopeLock lock(&connection->mutex_);
+	logcatf("timer cb, status is %d", connection->status());
 	if (connection->status_ == CONNECTED_AUTHORIZED) {
 		time_t now = time(NULL);
 		if (now - connection->latestPacketRecievedTime_ > connection->heartbeatDeadCount_ * connection->heartbeatIntervalSeconds_) {
+			logcatf("now=%ld, last=%ld deadCount=%d interval=%d, broadcast disconnected", now, connection->latestPacketRecievedTime_, connection->heartbeatDeadCount_, connection->heartbeatIntervalSeconds_);
 			connection->status_ = CONNECTING;
 			pthread_cond_broadcast(&connection->cond_);
 		} else {
-			if (connection->status_ > CONNECTING) {
-				// send heatbeat msg
-				LOGI("sending heart beat");
-				connection->sendMessage(YZMSGID_TERMINAL_HEARTBEAT, NULL, 0);
-			}
+			// send heatbeat msg
+			logcatf("sending heart beat");
+			connection->sendMessage(YZMSGID_TERMINAL_HEARTBEAT, NULL, 0);
 		}
 	}
 }
@@ -744,16 +754,16 @@ void *Connection::reconnectWorker(void *param)
 	ScopeLock lock(&conn->mutex_);
 
 	while (true) {
-		LOGD("reconnect worker, while " << conn->status_ << ' ' << conn->needReauthorization_);
+		logcatf("reconnect worker, status is %d needAuth is %d", conn->status_, conn->needReauthorization_ ? 1 : 0);
 		if (conn->status_ == CONNECTING) {
 			if (conn->needReauthorization_) {
-				LOGD("reconnecting...");
+				logcatf("reconnecting...");
 
 				int ret = conn->do_connectAndAuthorize();
 				if (conn->status_ < CONNECTED && conn->closedHandler_ != NULL) {
-					conn->closedHandler_(*conn);
+					pthread_t tid;
+					pthread_create(&tid, NULL, Connection::closedHandlerWorker, conn);
 				}
-				LOGD("reconnect " << ret << " " << conn->status_);
 				conn->needReauthorization_ = ret == 0 || ret == YZ_DUP_LOGIN;
 			} else {
 				// fixme need reconnect or not
@@ -784,6 +794,17 @@ void *Connection::messageHandlerWorker(void *p)
 	return NULL;
 }
 
+
+void *Connection::closedHandlerWorker(void *p)
+{
+	Connection *conn = static_cast<Connection*>(p);
+	Connection::closedHandler_t handler = conn->closedHandler_;
+	if (handler != NULL) {
+		handler(conn);
+	}
+
+	return NULL;
+}
 
 
 

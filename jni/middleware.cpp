@@ -126,7 +126,7 @@ void logStateCallBack(string simcardnum, long userId, string authCode,
 	}
 }
 
-void connClosedHandler(const Connection &conn) {
+void connClosedHandler(Connection *conn) {
 	logStateCallBack("", 0, "", 1);
 }
 

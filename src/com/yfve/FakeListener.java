@@ -1,12 +1,23 @@
 package com.yfve;
 
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.text.format.DateFormat;
 import android.util.Log;
 
 import vehicle_CVS.*;
 
-public class FakeLinsten implements VehicleTransitListen_DSP {
+public class FakeListener implements VehicleTransitListen_DSP {
+	FakeListener(Handler handler) {
+		mHandler = handler;
+	}
+
+	Handler mHandler;
 
 	@Override
 	public void yz_3_remotedescallback(int poinum, List<POIStruct_DSP> poilist,
@@ -25,6 +36,19 @@ public class FakeLinsten implements VehicleTransitListen_DSP {
 		Log.d("call back", String.format(
 				"tid = %s, userId = %d, userName = %s, state = %d", terminalID,
 				userId, userName, state));
+		if (mHandler != null) {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			Bundle bundle = new Bundle();
+			bundle.putString(
+					MainActivity.LOGIN_CONTENT,
+					String.format(
+							"%s tid = %s, userId = %d, userName = %s, state = %d\n",
+							sdf.format(new Date()), terminalID, userId,
+							userName, state));
+			Message msg = mHandler.obtainMessage(MainActivity.LOGIN_ID);
+			msg.setData(bundle);
+			mHandler.sendMessage(msg);
+		}
 
 	}
 
