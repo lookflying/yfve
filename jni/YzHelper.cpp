@@ -102,8 +102,8 @@ string locationStruct2string(JNIEnv* env, jobject loc) {
 	default:
 		break;
 	}
-	//status default set to 0
-	upload_status = 0;
+	//status default set to located
+	upload_status = 0x00000002;
 	//get longitude
 	jfieldID longitude_id = env->GetFieldID(loc_cls, "longitude", "D");
 	jdouble longitude = env->GetDoubleField(loc, longitude_id);
@@ -198,12 +198,13 @@ string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
 			"electricCircuit");
 	jint doorLocked = getIntField(env, cls, vehicle_data, "doorLocked");
 	jlong mileage = getLongField(env, cls, vehicle_data, "mileage");
-	message += big_endian((MSG_DWORD) 0); //报警
 	MSG_DWORD status = 0;
-	status = (MSG_DWORD) ((ACCSwitch & 0x0001) | (located & 0x0002)
-			| (operating & 0x0010) | (oilCircuit & 0x0400)
-			| (electricCircuit & 0x0800) | (doorLocked & 0x1000));
-	message += big_endian(status);
+	status = (MSG_DWORD) ((ACCSwitch ? 0x0001 : 0x0000)
+			| (located ? 0x0002 : 0x0000) | (operating ? 0x0010 : 0x0000)
+			| (oilCircuit ? 0x0400 : 0x0000)
+			| (electricCircuit ? 0x0800 : 0x0000)
+			| (doorLocked ? 0x1000 : 0x0000));
+
 	MSG_DWORD upload_longitude;
 	MSG_DWORD upload_latitude;
 	//get latitude
@@ -246,11 +247,10 @@ string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
 	byte0 = (MSG_BYTE) ((sec / 10) & 0xff);
 	byte1 = (MSG_BYTE) ((sec % 10) & 0xff);
 	MSG_BYTE2BCD(byte0, byte1, upload_time[5]);
-
-//	message += big_endian((MSG_DWORD) 0); //纬度
-//	message += big_endian((MSG_DWORD) 0); //经度
-	message += big_endian(upload_latitude);
-	message += big_endian(upload_longitude);
+	message += big_endian((MSG_DWORD) 0); //报警
+	message += big_endian(status);
+	message += big_endian(upload_latitude); //纬度
+	message += big_endian(upload_longitude); //经度
 	message += big_endian((MSG_WORD) 0); //高程
 	message += big_endian((MSG_WORD) speed);
 	message += big_endian((MSG_WORD) 0); //方向
@@ -263,6 +263,69 @@ string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
 	message += (MSG_BYTE) 0x02;
 	message += (MSG_BYTE) 2;
 	message += big_endian((MSG_WORD) oilLevel);
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x20;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x02;
+//	message += (char) 0x0B;
+//	message += (char) 0x76;
+//	message += (char) 0xF1;
+//	message += (char) 0x06;
+//	message += (char) 0xFB;
+//	message += (char) 0x11;
+//	message += (char) 0x35;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x13;
+//	message += (char) 0x08;
+//	message += (char) 0x02;
+//	message += (char) 0x23;
+//	message += (char) 0x40;
+//	message += (char) 0x16;
+//	message += (char) 0x01;
+//	message += (char) 0x04;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0xBC;
+//	message += (char) 0x2D;
+//	message += (char) 0x03;
+//	message += (char) 0x02;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0xEF;
+//	message += (char) 0x04;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0xEA;
+//	message += (char) 0x04;
+//	message += (char) 0x01;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0xFE;
+//	message += (char) 0x02;
+//	message += (char) 0xF0;
+//	message += (char) 0x00;
+//	message += (char) 0xFF;
+//	message += (char) 0x06;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x00;
+//	message += (char) 0x01;
+//	message += (char) 0x0F;
+//	message += (char) 0xFF;
+
 	return message;
 }
 

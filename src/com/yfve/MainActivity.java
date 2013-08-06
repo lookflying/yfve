@@ -117,17 +117,18 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				VehicleDataStruct_CVS vdata = new VehicleDataStruct_CVS();
+				vdata.setLocated(1);
 				vdata.setSpeed(5);
 				vdata.setOilLevel(200);
 				vdata.setACCSwitch(1);
-				vdata.setLocated(1);
+				vdata.setLocated(0xffff);
 				vdata.setOilCircuit(1);
 				vdata.setElectricCircuit(1);
 				vdata.setDoorLocked(1);
 				vdata.setOperating(1);
 				vdata.setMileage(600);
-				vdata.setLatitude(30.87638);
-				vdata.setLongitude(121.38088);
+				vdata.setLatitude(31.152993);
+				vdata.setLongitude(121.805543);
 				vdata.setTime(System.currentTimeMillis());
 				int ret = YZ_VehicleTransit_CVS.yz_3_sendvehicledata(
 						"12345678901", vdata);
