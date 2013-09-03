@@ -174,15 +174,55 @@ jint getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
 	return env->GetIntField(obj, field_id);
 }
 
+void setIntField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jint value) {
+	jfieldID field_id = env->GetFieldID(cls, field, "I");
+	env->SetIntField(obj, field_id, value);
+}
+
 jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "J");
 	return env->GetLongField(obj, field_id);
+}
+
+void setLongField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jlong value) {
+	jfieldID field_id = env->GetFieldID(cls, field, "J");
+	env->SetLongField(obj, field_id, value);
 }
 
 jdouble getDoubleField(JNIEnv *env, jclass cls, jobject obj,
 		const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "D");
 	return env->GetDoubleField(obj, field_id);
+}
+
+void setDoubleField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jdouble value) {
+	jfieldID field_id = env->GetFieldID(cls, field, "D");
+	env->SetDoubleField(obj, field_id, value);
+}
+
+jfloat getFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
+	jfieldID field_id = env->GetFieldID(cls, field, "F");
+	return env->GetFloatField(obj, field_id);
+}
+void setFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jfloat value) {
+	jfieldID field_id = env->GetFieldID(cls, field, "F");
+	env->SetFloatField(obj, field_id, value);
+}
+
+jstring getStringField(JNIEnv *env, jclass cls, jobject obj,
+		const char* field) {
+	jfieldID field_id = env->GetFieldID(cls, field, "Ljava/lang/String;");
+	return (jstring)env->GetObjectField(obj, field_id);
+}
+
+void setStringField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jstring value) {
+	jfieldID field_id = env->GetFieldID(cls, field, "Ljava/lang/String;");
+	env->SetObjectField(obj, field_id, value);
 }
 
 string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {

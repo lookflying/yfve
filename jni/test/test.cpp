@@ -225,6 +225,13 @@ TEST(msg_test, dump_register){
 				EXPECT_EQ(1, packed.size());
 				print_hex((char*)packed[0].data, packed[0].length);	
 }
+TEST(msg_test, str2dword){
+	MSG_DWORD tdword = 123456;
+	string tstr = big_endian(tdword);
+	MSG_DWORD rst;
+	big_endian2dword((MSG_BYTE*)tstr.c_str(), &rst);
+	EXPECT_EQ(tdword, rst);
+}
 
 int main(int argc, char** argv){
 				::testing::InitGoogleTest(&argc, argv);

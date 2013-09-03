@@ -54,7 +54,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				int ret = YZ_VehicleTransit_CVS.yz_2_register("13816429129", 0,
-						0, "", "", "", 0, "苏C0000");
+						0, "", "", "", 0, "苏C0001");
 				text1.setText(String.format("register return value = %d", ret));
 				String authCode = YZ_VehicleTransit_CVS.yz_2_getAuthCode();
 				text2.setText(String.format("authcode = %s", authCode));

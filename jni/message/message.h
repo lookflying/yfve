@@ -192,5 +192,9 @@ std::string big_endian(MSG_DWORD dword);
  */
 void string2num(std::string str, MSG_BYTE** numbers);
 
+/*
+ * 字符串转换为DWORD
+ */
+void big_endian2dword(const MSG_BYTE* bytes, MSG_DWORD * dword);
 
 #endif

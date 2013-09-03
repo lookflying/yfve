@@ -26,7 +26,6 @@
 #define YZ_USER_EXIST	(1008)	//登录的用户已存在
 #define YZ_DEVICE_NOT_REGIST	(1009)//终端未被正确注册
 #define YZ_DEVICE_NOT_BINDING	(1010)//终端未绑定有效车辆
-
 #define YZ_UNEXPECTED	9997
 #define YZ_SOCK_ERROR  9998
 #define YZ_OUT_OF_MEM  9999
@@ -51,9 +50,7 @@
 #define YZMSGID_EVENT_REPORT					0X0301
 #define YZMSGID_DISPATCH_ASK					0X8302
 #define YZMSGID_ASK_RESPONSE					0X0302
-
-
-
+#define YZMSGID_POI								0X8900//poi下发
 /**
  * printf to logcat
  */
@@ -70,7 +67,6 @@ std::string jstring2string(JNIEnv* env, jstring jstr);
  * string to jstring
  */
 jstring string2jstring(JNIEnv* env, const std::string str);
-
 
 /**
  * 将string中的内容封装为msg_body_t, 不进行内存拷贝
@@ -100,7 +96,24 @@ jint getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field);
  *获取对象long型字段
 
  */
+
 jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field);
+jfloat getFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field);
+void setIntField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jint value);
+void setLongField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jlong value);
+void setDoubleField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jdouble value);
+void setDoubleField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jdouble value);
+void setFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jfloat value);
+jstring getStringField(JNIEnv *env, jclass cls, jobject obj, const char* field);
+
+void setStringField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+		jstring value);
+
 /**
  * 将字节数组转换为string
  */

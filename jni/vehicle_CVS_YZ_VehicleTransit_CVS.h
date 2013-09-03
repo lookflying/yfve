@@ -130,10 +130,10 @@ JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1deregist
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
  * Method:    prepare_class
- * Signature: (Ljava/util/List;Lvehicle_CVS/TMCStruct_DSP;Lvehicle_CVS/WeatherStruct_DSP;)V
+ * Signature: (Ljava/util/List;Lvehicle_CVS/TMCStruct_DSP;Lvehicle_CVS/WeatherStruct_DSP;Lvehicle_CVS/POIStruct_DSP;)V
  */
 JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_prepare_1class
-  (JNIEnv *, jclass, jobject, jobject, jobject);
+  (JNIEnv *, jclass, jobject, jobject, jobject, jobject);
 
 #ifdef __cplusplus
 }

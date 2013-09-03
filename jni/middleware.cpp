@@ -6,6 +6,7 @@
  */
 
 #include "middleware.h"
+#include "YzHelper.h"
 #include <cstdarg>
 using namespace std;
 
@@ -19,6 +20,7 @@ jobject g_listen_obj = NULL;
 jclass g_poilist_cls = NULL;
 jclass g_tmc_struct_cls = NULL;
 jclass g_weather_struct_cls = NULL;
+jclass g_poi_cls = NULL;
 
 /**
  * 服务器主发消息回调函数
@@ -43,8 +45,8 @@ void callVoidMethod(JNIEnv *env, jclass cls, const char* name, const char* sig,
 	}
 }
 
-jobject callDefaultConstructor(JNIEnv *env, jclass cls){
-	jmethodID mid = env->GetMethodID(cls,"<init>","()V");
+jobject callDefaultConstructor(JNIEnv *env, jclass cls) {
+	jmethodID mid = env->GetMethodID(cls, "<init>", "()V");
 	return env->NewObject(cls, mid);
 }
 
@@ -62,17 +64,24 @@ bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 	if (g_jvm != NULL && g_jvm->AttachCurrentThread(&env, NULL) == JNI_OK
 			&& g_listen_obj != NULL) {
 		cls = env->GetObjectClass(g_listen_obj);
+		logcat_hex((char*)msg.content, msg.length);
 		switch (msgid) {
-		default:
+		case (MSG_WORD) YZMSGID_POI: {
 			jobject poilist = env->AllocObject(g_poilist_cls);
-			jint poinum = 0;
-			jint result = -1;
-			callVoidMethod(env, cls, "yz_3_remotedescallback",
-					"(ILjava/util/List;I)V", poinum, poilist, result);
+			if (msg.length > 8) {
+				jint poinum = 1;
+				jint result = 0;
+				jobject poi = msg2poi(env, msg);
+				callVoidMethod(env, cls, "yz_3_remotedescallback",
+						"(ILjava/util/List;I)V", poinum, poilist, result);
+			}
+
+		}
+			break;
+		default:
 			jobject tmc_struct = env->AllocObject(g_tmc_struct_cls);
 			callVoidMethod(env, cls, "yz_3_TMCcallback",
 					"(Lvehicle_CVS/TMCStruct_DSP;)V", tmc_struct);
-
 
 			jobject weather_struct = env->AllocObject(g_weather_struct_cls);
 			callVoidMethod(env, cls, "yz_3_weathercallback",
@@ -131,11 +140,10 @@ void connClosedHandler(Connection *conn) {
 }
 
 void startMiddleware(const std::string server_ip, const int server_port) {
-	MSG_WORD platformResponseMsgIds[] = {
-			YZMSGID_GENERAL_PLATFORM_RESPONSE,
+	MSG_WORD platformResponseMsgIds[] = { YZMSGID_GENERAL_PLATFORM_RESPONSE,
 			YZMSGID_TERMINAL_REGISTER_RESPONSE,
 
-			};
+	};
 	Connection::responseMsgIdSet.insert(platformResponseMsgIds,
 			platformResponseMsgIds
 					+ sizeof(platformResponseMsgIds)
@@ -176,4 +184,25 @@ void unsetCls(JNIEnv *env) {
 	env->DeleteGlobalRef(g_poilist_cls);
 	env->DeleteGlobalRef(g_tmc_struct_cls);
 	env->DeleteGlobalRef(g_weather_struct_cls);
+}
+
+jobject msg2poi(JNIEnv* env, const msg_body_t & msg) {
+	jobject poi = env->AllocObject(g_poi_cls);
+	jclass cls = env->GetObjectClass(poi);
+	MSG_DWORD latitude, longtitude;
+	jfloat jlatitude, jlongtitude;
+	big_endian2dword(msg.content, &latitude);
+	big_endian2dword(msg.content + sizeof(MSG_DWORD), &longtitude);
+	jlatitude = static_cast<jfloat>(latitude) / 1000000;
+	jlongtitude = static_cast<jfloat>(longtitude) / 1000000;
+	setFloatField(env, cls, poi, "latitude", jlatitude);
+	setFloatField(env, cls, poi, "longtitude", jlongtitude);
+	string poi_name = "";
+	if (msg.length > 2 * sizeof(MSG_DWORD)) {
+		poi_name.append((char*) msg.content + 2 * sizeof(MSG_DWORD),
+				msg.length - 2 * sizeof(MSG_DWORD));
+	}
+	jstring jpoi_name = string2jstring(env, poi_name);
+	setStringField(env, cls, poi, "poiname", jpoi_name);
+	return poi;
 }

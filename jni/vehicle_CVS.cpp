@@ -233,10 +233,10 @@ using namespace std;
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
  * Method:    prepare_class
- * Signature: (Ljava/util/List;Lvehicle_CVS/TMCStruct_DSP;Lvehicle_CVS/WeatherStruct_DSP;)V
+ * Signature: (Ljava/util/List;Lvehicle_CVS/TMCStruct_DSP;Lvehicle_CVS/WeatherStruct_DSP;Lvehicle_CVS/POIStruct_DSP;)V
  */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_prepare_1class(
 		JNIEnv *env, jclass cls, jobject poilist, jobject tmc_struct,
-		jobject weather_struct) {
+		jobject weather_struct, jobject poi) {
 	jclass poilist_cls = env->GetObjectClass(poilist);
 	g_poilist_cls = reinterpret_cast<jclass>(env->NewGlobalRef(poilist_cls));
 	jclass tmc_struct_cls = env->GetObjectClass(tmc_struct);
@@ -245,6 +245,8 @@ using namespace std;
 	jclass weather_struct_cls = env->GetObjectClass(weather_struct);
 	g_weather_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(
 			weather_struct_cls));
+	jclass poi_cls = env->GetObjectClass(poi);
+	g_poi_cls = reinterpret_cast<jclass>(env->NewGlobalRef(poi_cls));
 
 }
 

@@ -379,7 +379,8 @@ bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, MSG_WORD &msg_seq,
 				if (msg_it == it->second.end()) {
 					goto index_not_found;
 				} else {
-					unsigned int len = MSG_LENGTH(msg_it->second.header.property);
+					unsigned int len =
+							MSG_LENGTH(msg_it->second.header.property);
 					memcpy(ptr, msg_it->second.body.content, len);
 					ptr += len;
 				}
@@ -406,14 +407,22 @@ bool unpack_msg(const msg_message_t &msg, MSG_WORD &msg_id, MSG_WORD &msg_seq,
 	return false;
 }
 
-void string2num(string str, MSG_BYTE** numbers){
+void string2num(string str, MSG_BYTE** numbers) {
 	*numbers = new MSG_BYTE[str.size()];
 	MSG_BYTE* ptr = *numbers;
 	char buf[2];
 	buf[1] = 0;
-	for (unsigned int i = 0; i < str.size(); ++i){
+	for (unsigned int i = 0; i < str.size(); ++i) {
 		buf[0] = str.at(i);
-		ptr[i] = (MSG_BYTE)atoi(buf);
+		ptr[i] = (MSG_BYTE) atoi(buf);
 	}
 }
 
+void big_endian2dword(const MSG_BYTE* bytes, MSG_DWORD * dword) {
+	MSG_BYTE llbyte, lhbyte, hlbyte, hhbyte;
+	hhbyte = bytes[0];
+	hlbyte = bytes[1];
+	lhbyte = bytes[2];
+	llbyte = bytes[3];
+	*dword = (hhbyte << 24) | (hlbyte << 16) | (lhbyte << 8) | llbyte;
+}

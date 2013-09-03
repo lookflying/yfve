@@ -17,6 +17,7 @@ extern JavaVM * g_jvm;
 extern jclass g_poilist_cls;
 extern jclass g_tmc_struct_cls;
 extern jclass g_weather_struct_cls;
+extern jclass g_poi_cls;
 extern bool g_working;
 /**
  * 启动化中间件
@@ -75,5 +76,10 @@ typedef struct log_state {
  * 登录函数回调routine
  */
 void* logStateCallBackWorker(void* p);
+
+/**
+ * 从msg_body获取poi struct
+ */
+jobject msg2poi(JNIEnv* env,const msg_body_t &msg);
 
 #endif /* MIDDLEWARE_H_ */

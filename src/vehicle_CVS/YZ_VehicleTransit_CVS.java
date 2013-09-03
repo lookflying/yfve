@@ -230,7 +230,8 @@ public class YZ_VehicleTransit_CVS {
 		List<POIStruct_DSP> poiList = new ArrayList<POIStruct_DSP>();
 		TMCStruct_DSP tmc_struct = new TMCStruct_DSP();
 		WeatherStruct_DSP weather_struct = new WeatherStruct_DSP();
-		prepare_class(poiList, tmc_struct, weather_struct);
+		POIStruct_DSP poi = new POIStruct_DSP();
+		prepare_class(poiList, tmc_struct, weather_struct, poi);
 	}
 
 	/**
@@ -241,6 +242,6 @@ public class YZ_VehicleTransit_CVS {
 	 * @param weather_struct
 	 */
 	private static native void prepare_class(List<POIStruct_DSP> poilist,
-			TMCStruct_DSP tmc_struct, WeatherStruct_DSP weather_struct);
+			TMCStruct_DSP tmc_struct, WeatherStruct_DSP weather_struct, POIStruct_DSP poi);
 
 }
