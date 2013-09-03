@@ -227,7 +227,7 @@ public class YZ_VehicleTransit_CVS {
 	 * 辅助函数， 为解决findclass返回NULL的问题，在init前需要调用此函数，将回调函数中将会用到的java类传入
 	 */
 	public static void yz_2_prepare_class() {
-		List<POIStruct_DSP> poiList = new ArrayList<POIStruct_DSP>();
+		ArrayList<POIStruct_DSP> poiList = new ArrayList<POIStruct_DSP>();
 		TMCStruct_DSP tmc_struct = new TMCStruct_DSP();
 		WeatherStruct_DSP weather_struct = new WeatherStruct_DSP();
 		POIStruct_DSP poi = new POIStruct_DSP();
@@ -243,5 +243,7 @@ public class YZ_VehicleTransit_CVS {
 	 */
 	private static native void prepare_class(List<POIStruct_DSP> poilist,
 			TMCStruct_DSP tmc_struct, WeatherStruct_DSP weather_struct, POIStruct_DSP poi);
+	
+	public static native void yz_3_test();
 
 }

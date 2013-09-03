@@ -26,6 +26,13 @@ public class FakeListener implements VehicleTransitListen_DSP {
 		Log.d("call back", "yz_3_remotedescallback called");
 		Log.d("call back", String.format(
 				"remotecallback poinum = %d result = %d", poinum, result));
+		int count = poilist.size();
+		if (count > 0) {
+			Log.d("call back", String.format(
+					"latitude = %f\t longtitude = %f\t name = %s",
+					poilist.get(0).getLatitude(), poilist.get(0)
+							.getLongtitude(), poilist.get(0).getPoiname()));
+		}
 
 	}
 

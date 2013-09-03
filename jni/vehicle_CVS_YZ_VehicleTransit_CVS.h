@@ -135,6 +135,14 @@ JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1deregist
 JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_prepare_1class
   (JNIEnv *, jclass, jobject, jobject, jobject, jobject);
 
+/*
+ * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
+ * Method:    yz_3_test
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_13_1test
+  (JNIEnv *, jclass);
+
 #ifdef __cplusplus
 }
 #endif

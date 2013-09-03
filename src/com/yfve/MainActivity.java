@@ -3,7 +3,6 @@ package com.yfve;
 import vehicle_CVS.LocationStruct_CVS;
 import vehicle_CVS.VehicleDataStruct_CVS;
 import vehicle_CVS.YZ_VehicleTransit_CVS;
-import android.R.integer;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,6 +28,7 @@ public class MainActivity extends Activity {
 	private Button button6;
 	private Button button7;
 	private Button button8;
+	private Button button9;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
 		text6 = (EditText) findViewById(R.id.editText6);
 		button7 = (Button) findViewById(R.id.button7);
 		button8 = (Button) findViewById(R.id.button8);
+		button9 = (Button) findViewById(R.id.button9);
 
 		button1.setOnClickListener(new OnClickListener() {
 
@@ -158,6 +159,14 @@ public class MainActivity extends Activity {
 			public void onClick(View v) {
 				YZ_VehicleTransit_CVS.yz_2_destroy();
 				text3.setText("Middleware stopped");
+			}
+		});
+		
+		button9.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				YZ_VehicleTransit_CVS.yz_3_test();
 			}
 		});
 

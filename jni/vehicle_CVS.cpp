@@ -250,3 +250,23 @@ using namespace std;
 
 }
 
+/*
+ * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
+ * Method:    yz_3_test
+ * Signature: ()V
+ * only for test
+ */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_13_1test(
+		JNIEnv *, jclass) {
+	Connection &conn = *g_conn_manager.getConnection(0);
+	msg_body_t msg;
+	MSG_BYTE data[] = { (MSG_BYTE)0x01, (MSG_BYTE) 0xdb, (MSG_BYTE) 0x50,
+			(MSG_BYTE) 0x75, (MSG_BYTE) 0x07, (MSG_BYTE) 0x42, (MSG_BYTE) 0x71,
+			(MSG_BYTE) 0x9f, (MSG_BYTE) 0xc4, (MSG_BYTE) 0xbf, (MSG_BYTE) 0xb5,
+			(MSG_BYTE) 0xc4, (MSG_BYTE) 0xb5, (MSG_BYTE) 0xd8 };
+	msg.content = &data[0];
+	msg.length = 14;
+	MSG_WORD rid;
+	string response = "";
+	conn.messageHandler()(conn, 0x8103, 123, msg, &rid, &response);
+}
+
