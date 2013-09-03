@@ -64,7 +64,7 @@ bool messageHandler(const Connection &conn, MSG_WORD msgid, MSG_WORD msgSerial,
 	if (g_jvm != NULL && g_jvm->AttachCurrentThread(&env, NULL) == JNI_OK
 			&& g_listen_obj != NULL) {
 		cls = env->GetObjectClass(g_listen_obj);
-		logcat_hex((char*)msg.content, msg.length);
+		logcat_hex((char*) msg.content, msg.length);
 		switch (msgid) {
 		case (MSG_WORD) YZMSGID_POI: {
 			jobject poilist = env->AllocObject(g_poilist_cls);
@@ -198,11 +198,15 @@ jobject msg2poi(JNIEnv* env, const msg_body_t & msg) {
 	setFloatField(env, cls, poi, "latitude", jlatitude);
 	setFloatField(env, cls, poi, "longtitude", jlongtitude);
 	string poi_name = "";
+	logcatf("msg length = %u\n", msg.length);
 	if (msg.length > 2 * sizeof(MSG_DWORD)) {
 		poi_name.append((char*) msg.content + 2 * sizeof(MSG_DWORD),
 				msg.length - 2 * sizeof(MSG_DWORD));
 	}
 	jstring jpoi_name = string2jstring(env, poi_name);
 	setStringField(env, cls, poi, "poiname", jpoi_name);
+	logcatf("latitude:%l\tlongtitude%l\t", latitude, longtitude);
+	logcatf("latitude:%d\tlongtitude%d\t", latitude, longtitude);
+	logcatf("latitude:%u\tlongtitude%u\t", latitude, longtitude);
 	return poi;
 }

@@ -50,7 +50,7 @@
 #define YZMSGID_EVENT_REPORT					0X0301
 #define YZMSGID_DISPATCH_ASK					0X8302
 #define YZMSGID_ASK_RESPONSE					0X0302
-#define YZMSGID_POI								0X8900//poi下发
+#define YZMSGID_POI								0X8103//poi下发
 /**
  * printf to logcat
  */
