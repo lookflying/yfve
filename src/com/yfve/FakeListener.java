@@ -7,7 +7,6 @@ import java.util.List;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.text.format.DateFormat;
 import android.util.Log;
 
 import vehicle_CVS.*;
@@ -32,7 +31,16 @@ public class FakeListener implements VehicleTransitListen_DSP {
 					"latitude = %f\t longtitude = %f\t name = %s",
 					poilist.get(0).getLatitude(), poilist.get(0)
 							.getLongtitude(), poilist.get(0).getPoiname()));
-		}
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+			Bundle bundle = new Bundle();
+			bundle.putString(MainActivity.TEST_CONTENT, String.format(
+					"%s lat: %f\tlong: %f %s\n", sdf.format(new Date()),
+					poilist.get(0).getLatitude(), poilist.get(0)
+							.getLongtitude(), poilist.get(0).getPoiname()));
+			Message msg = mHandler.obtainMessage(MainActivity.TEST_ID);
+			msg.setData(bundle);
+			mHandler.sendMessage(msg);
+		}	
 
 	}
 

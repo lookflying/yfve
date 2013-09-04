@@ -229,8 +229,8 @@ jobject msg2poi(JNIEnv* env, const msg_body_t & msg) {
 		jbyteArray bytes = env->NewByteArray(
 				msg.length - 2 * sizeof(MSG_DWORD));
 		env->SetByteArrayRegion(bytes, 0, msg.length - 2 * sizeof(MSG_DWORD),
-				(jbyte*) msg.content);
-		jstring encoding = env->NewStringUTF("GBK");
+				(jbyte*) msg.content +  2 * sizeof(MSG_DWORD));
+		jstring encoding = env->NewStringUTF("gb2312");
 		jpoi_name = (jstring) env->NewObject(strClass, ctorID, bytes, encoding);
 	} else {
 		jpoi_name = string2jstring(env, "");

@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
 	private Button button7;
 	private Button button8;
 	private Button button9;
+	private EditText text7;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +50,7 @@ public class MainActivity extends Activity {
 		button7 = (Button) findViewById(R.id.button7);
 		button8 = (Button) findViewById(R.id.button8);
 		button9 = (Button) findViewById(R.id.button9);
+		text7 = (EditText) findViewById(R.id.editText7);
 
 		button1.setOnClickListener(new OnClickListener() {
 
@@ -161,7 +163,7 @@ public class MainActivity extends Activity {
 				text3.setText("Middleware stopped");
 			}
 		});
-		
+
 		button9.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -181,12 +183,19 @@ public class MainActivity extends Activity {
 
 	public static final int LOGIN_ID = 0;
 	public static final String LOGIN_CONTENT = "login";
+	public static final int TEST_ID = 1;
+	public static final String TEST_CONTENT = "test";
 	private final Handler uiHandler = new Handler() {
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
 			switch (msg.what) {
-			default:
+			case LOGIN_ID:
 				text4.append(msg.getData().getString(LOGIN_CONTENT));
+				break;
+			case TEST_ID:
+			default:
+				text7.append(msg.getData().getString(TEST_CONTENT));
+				break;
 			}
 		}
 	};
