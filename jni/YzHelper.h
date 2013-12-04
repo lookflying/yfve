@@ -118,4 +118,9 @@ void setStringField(JNIEnv *env, jclass cls, jobject obj, const char* field,
  * 将字节数组转换为string
  */
 std::string jbyteArray2string(JNIEnv *env, jbyteArray array);
+
+/**
+ * 从msg_body获取poi struct
+ */
+jobject msg2poi(JNIEnv* env,const msg_body_t &msg);
 #endif /* YZERR_H_ */

@@ -5,13 +5,13 @@
  *      Author: lookflying
  */
 
+
+#ifndef MIDDLEWARE_H_
+#define MIDDLEWARE_H_
 #include <string>
 #include "YzHelper.h"
 #include "Connection.h"
 #include "ConnectionManager.h"
-#ifndef MIDDLEWARE_H_
-#define MIDDLEWARE_H_
-
 extern ConnectionManager g_conn_manager;
 extern JavaVM * g_jvm;
 extern jclass g_poilist_cls;
@@ -77,9 +77,6 @@ typedef struct log_state {
  */
 void* logStateCallBackWorker(void* p);
 
-/**
- * 从msg_body获取poi struct
- */
-jobject msg2poi(JNIEnv* env,const msg_body_t &msg);
+
 
 #endif /* MIDDLEWARE_H_ */
