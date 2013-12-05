@@ -1,12 +1,13 @@
 #include <jni.h>
 #include "vehicle_CVS_YZ_VehicleTransit_CVS.h"
 #include "YzHelper.h"
-#include "middleware.h"
+#include "Middleware.h"
 #include "message/message.h"
 #include <ctime>
 #include <stdlib.h>
 #include <pthread.h>
 using namespace std;
+Middleware middleware;
 /*
  * Class:     vehicle_CVS_YZ_VehicleTransit_CVS
  * Method:    yz_2_userlogin
@@ -14,12 +15,12 @@ using namespace std;
  */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1userlogin(
 		JNIEnv * env, jclass cls, jstring simcardnum, jstring username,
 		jstring password, jobjectArray person) {
-	if (g_working) {
+	if (Middleware::g_working) {
 		string authCode = jstring2string(env, username);
 		string csimcardnum = jstring2string(env, simcardnum);
 		set_global_phone_num((MSG_BYTE*)csimcardnum.c_str(),
 				csimcardnum.size());
-		Connection &conn = *g_conn_manager.getConnection(0);
+		Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 		conn.setAuthorizationCode(authCode);
 		int ret = conn.connectAndAuthorize();
 		if (ret == 0) {
@@ -29,7 +30,7 @@ using namespace std;
 			state.state = 0;
 			state.userId = 0;
 			pthread_t tid;
-			(void) pthread_create(&tid, NULL, logStateCallBackWorker,
+			(void) pthread_create(&tid, NULL, Middleware::logStateCallBackWorker,
 					(void*) &state);
 		}
 		return ret;
@@ -44,7 +45,7 @@ using namespace std;
  * Signature: (Ljava/lang/String;Ljava/lang/String;)I
  */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1userlogout(
 		JNIEnv * env, jclass cls, jstring, jstring) {
-	Connection &conn = *g_conn_manager.getConnection(0);
+	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	int ret = conn.disconnect();
 	if (ret == 0) {
 		static log_state_t state;
@@ -53,7 +54,7 @@ using namespace std;
 		state.state = 2;
 		state.userId = 0;
 		pthread_t tid;
-		(void) pthread_create(&tid, NULL, logStateCallBackWorker,
+		(void) pthread_create(&tid, NULL, Middleware::logStateCallBackWorker,
 				(void*) &state);
 	}
 	return ret;
@@ -67,7 +68,7 @@ using namespace std;
 		JNIEnv * env, jclass cls, jstring simcardnum, jobject cur_loc) {
 	string message = locationStruct2string(env, cur_loc);
 	msg_body_t *response;
-	Connection &conn = *g_conn_manager.getConnection(0);
+	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	int ret = conn.sendMessageAndWait(YZMSGID_POSITION_REPORT, message.c_str(),
 			message.length(), &response, false);
 	if (ret == 0)
@@ -119,7 +120,7 @@ using namespace std;
 		JNIEnv * env, jclass cls, jstring simcardnum, jobject vehicle_data) {
 	string message = vehicleDataStruct2string(env, vehicle_data);
 	msg_body_t *response;
-	Connection &conn = *g_conn_manager.getConnection(0);
+	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	int ret = conn.sendMessageAndWait(YZMSGID_POSITION_REPORT, message.c_str(),
 			message.length(), &response, false);
 	if (ret == 0)
@@ -135,9 +136,9 @@ using namespace std;
 		JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp,
 		jint cvsPort, jobject vehicleTransitListen) {
 	string ip = jstring2string(env, cvsIp);
-	setJVM(env);
-	setListen(env, vehicleTransitListen);
-	startMiddleware(ip, cvsPort);
+	Middleware::setJVM(env);
+	Middleware::setListen(env, vehicleTransitListen);
+	Middleware::startMiddleware(ip, cvsPort);
 
 }
 
@@ -157,10 +158,10 @@ using namespace std;
  * Signature: ()V
  */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1destroy(
 		JNIEnv *env, jclass cls) {
-	stopMiddleware();
-	unsetListen(env);
-	unsetCls(env);
-	unsetJVM();
+	Middleware::stopMiddleware();
+	Middleware::unsetListen(env);
+	Middleware::unsetCls(env);
+	Middleware::unsetJVM();
 
 }
 
@@ -180,7 +181,7 @@ using namespace std;
 		JNIEnv *env, jclass cls, jstring simcardnum, jint provinceId,
 		jint cityId, jstring makerId, jstring terminalModel, jstring terminalId,
 		jint plateColor, jbyteArray plateNum) {
-	if (g_working) {
+	if (Middleware::g_working) {
 		string csimcardnum = jstring2string(env, simcardnum);
 		set_global_phone_num((MSG_BYTE*)csimcardnum.c_str(),
 				csimcardnum.size());
@@ -195,7 +196,7 @@ using namespace std;
 		string2bytes(cterminalId, msg.terminalId, sizeof(msg.terminalId));
 		msg.color = (MSG_BYTE) plateColor;
 		msg.carPlate = jbyteArray2string(env, plateNum);
-		Connection &conn = *g_conn_manager.getConnection(0);
+		Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 
 		int ret = conn.connect();
 		logcatf("connect return %d\n", ret);
@@ -215,7 +216,7 @@ using namespace std;
  * Signature: ()Ljava/lang/String;
  */JNIEXPORT jstring JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1getAuthCode(
 		JNIEnv *env, jclass cls) {
-	Connection &conn = *g_conn_manager.getConnection(0);
+	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	string cauthCode = conn.authorizationCode();
 	jstring authCode = string2jstring(env, cauthCode);
 	return authCode;
@@ -226,7 +227,7 @@ using namespace std;
  * Signature: ()I
  */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1deregister(
 		JNIEnv * env, jclass cls) {
-	Connection &conn = *g_conn_manager.getConnection(0);
+	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	return conn.deregisterTerminal();
 }
 
@@ -238,15 +239,15 @@ using namespace std;
 		JNIEnv *env, jclass cls, jobject poilist, jobject tmc_struct,
 		jobject weather_struct, jobject poi) {
 	jclass poilist_cls = env->GetObjectClass(poilist);
-	g_poilist_cls = reinterpret_cast<jclass>(env->NewGlobalRef(poilist_cls));
+	Middleware::g_poilist_cls = reinterpret_cast<jclass>(env->NewGlobalRef(poilist_cls));
 	jclass tmc_struct_cls = env->GetObjectClass(tmc_struct);
-	g_tmc_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(
+	Middleware::g_tmc_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(
 			tmc_struct_cls));
 	jclass weather_struct_cls = env->GetObjectClass(weather_struct);
-	g_weather_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(
+	Middleware::g_weather_struct_cls = reinterpret_cast<jclass>(env->NewGlobalRef(
 			weather_struct_cls));
 	jclass poi_cls = env->GetObjectClass(poi);
-	g_poi_cls = reinterpret_cast<jclass>(env->NewGlobalRef(poi_cls));
+	Middleware::g_poi_cls = reinterpret_cast<jclass>(env->NewGlobalRef(poi_cls));
 
 }
 
@@ -257,7 +258,7 @@ using namespace std;
  * only for test
  */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_13_1test(
 		JNIEnv *, jclass) {
-	Connection &conn = *g_conn_manager.getConnection(0);
+	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	msg_body_t msg;
 	MSG_BYTE data[] = { (MSG_BYTE)0x01, (MSG_BYTE) 0xdb, (MSG_BYTE) 0x50,
 			(MSG_BYTE) 0x75, (MSG_BYTE) 0x07, (MSG_BYTE) 0x42, (MSG_BYTE) 0x71,

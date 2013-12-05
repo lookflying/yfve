@@ -9,7 +9,7 @@ LOCAL_SRC_FILES := vehicle_CVS.cpp	\
 					YzHelper.cpp \
 					Connection.cpp \
 					ConnectionManager.cpp \
-					middleware.cpp
+					Middleware.cpp
 LOCAL_SHARED_LIBRARIES := liblog libcutils
 LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -llog									
 include $(BUILD_SHARED_LIBRARY)

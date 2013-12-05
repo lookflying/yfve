@@ -1,4 +1,5 @@
 #include "YzHelper.h"
+#include "Middleware.h"
 #include <unistd.h>
 #include <cstring>
 #include <android/log.h>
@@ -381,9 +382,9 @@ string jbyteArray2string(JNIEnv *env, jbyteArray array) {
 	delete[] buf;
 	return str;
 }
-extern jclass g_poi_cls;
+
 jobject msg2poi(JNIEnv* env, const msg_body_t & msg) {
-	jobject poi = env->AllocObject(g_poi_cls);
+	jobject poi = env->AllocObject(Middleware::g_poi_cls);
 	jclass cls = env->GetObjectClass(poi);
 	MSG_DWORD latitude, longtitude;
 	jfloat jlatitude, jlongtitude;
