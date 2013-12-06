@@ -16,8 +16,8 @@ Middleware middleware;
 		JNIEnv * env, jclass cls, jstring simcardnum, jstring username,
 		jstring password, jobjectArray person) {
 	if (Middleware::g_working) {
-		string authCode = jstring2string(env, username);
-		string csimcardnum = jstring2string(env, simcardnum);
+		string authCode = YzHelper::jstring2string(env, username);
+		string csimcardnum = YzHelper::jstring2string(env, simcardnum);
 		set_global_phone_num((MSG_BYTE*)csimcardnum.c_str(),
 				csimcardnum.size());
 		Connection &conn = *Middleware::g_conn_manager.getConnection(0);
@@ -66,7 +66,7 @@ Middleware middleware;
  * Signature: (Ljava/lang/String;Lvehicle_CVS/LocationStruct_CVS;)I
  */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_13_1gpsupload(
 		JNIEnv * env, jclass cls, jstring simcardnum, jobject cur_loc) {
-	string message = locationStruct2string(env, cur_loc);
+	string message = YzHelper::locationStruct2string(env, cur_loc);
 	msg_body_t *response;
 	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	int ret = conn.sendMessageAndWait(YZMSGID_POSITION_REPORT, message.c_str(),
@@ -118,7 +118,7 @@ Middleware middleware;
  * Signature: (Ljava/lang/String;Lvehicle_CVS/VehicleDataStruct_CVS;)I
  */JNIEXPORT jint JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_13_1sendvehicledata(
 		JNIEnv * env, jclass cls, jstring simcardnum, jobject vehicle_data) {
-	string message = vehicleDataStruct2string(env, vehicle_data);
+	string message = YzHelper::vehicleDataStruct2string(env, vehicle_data);
 	msg_body_t *response;
 	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	int ret = conn.sendMessageAndWait(YZMSGID_POSITION_REPORT, message.c_str(),
@@ -135,7 +135,7 @@ Middleware middleware;
  */JNIEXPORT void JNICALL Java_vehicle_1CVS_YZ_1VehicleTransit_1CVS_yz_12_1init__Ljava_lang_String_2Ljava_lang_String_2ILvehicle_1CVS_VehicleTransitListen_1DSP_2(
 		JNIEnv *env, jclass cls, jstring terminalId, jstring cvsIp,
 		jint cvsPort, jobject vehicleTransitListen) {
-	string ip = jstring2string(env, cvsIp);
+	string ip = YzHelper::jstring2string(env, cvsIp);
 	Middleware::setJVM(env);
 	Middleware::setListen(env, vehicleTransitListen);
 	Middleware::startMiddleware(ip, cvsPort);
@@ -182,29 +182,29 @@ Middleware middleware;
 		jint cityId, jstring makerId, jstring terminalModel, jstring terminalId,
 		jint plateColor, jbyteArray plateNum) {
 	if (Middleware::g_working) {
-		string csimcardnum = jstring2string(env, simcardnum);
+		string csimcardnum = YzHelper::jstring2string(env, simcardnum);
 		set_global_phone_num((MSG_BYTE*)csimcardnum.c_str(),
 				csimcardnum.size());
 		TerminalRegisterMessage msg;
 		msg.provinceId = (MSG_WORD) provinceId;
 		msg.cityId = (MSG_WORD) cityId;
-		string cmakerId = jstring2string(env, makerId);
-		string2bytes(cmakerId, msg.manufactory, sizeof(msg.manufactory));
-		string cmodel = jstring2string(env, terminalModel);
-		string2bytes(cmodel, msg.terminalModel, sizeof(msg.terminalModel));
-		string cterminalId = jstring2string(env, terminalId);
-		string2bytes(cterminalId, msg.terminalId, sizeof(msg.terminalId));
+		string cmakerId = YzHelper::jstring2string(env, makerId);
+		YzHelper::string2bytes(cmakerId, msg.manufactory, sizeof(msg.manufactory));
+		string cmodel = YzHelper::jstring2string(env, terminalModel);
+		YzHelper::string2bytes(cmodel, msg.terminalModel, sizeof(msg.terminalModel));
+		string cterminalId = YzHelper::jstring2string(env, terminalId);
+		YzHelper::string2bytes(cterminalId, msg.terminalId, sizeof(msg.terminalId));
 		msg.color = (MSG_BYTE) plateColor;
-		msg.carPlate = jbyteArray2string(env, plateNum);
+		msg.carPlate = YzHelper::jbyteArray2string(env, plateNum);
 		Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 
 		int ret = conn.connect();
-		logcatf("connect return %d\n", ret);
+		YzHelper::logcatf("connect return %d\n", ret);
 		if (ret != 0) {
 			return ret;
 		}
 		ret = conn.registerTerminal(msg);
-		logcatf("register return %d\n", ret);
+		YzHelper::logcatf("register return %d\n", ret);
 		return ret;
 	} else {
 		return YZ_CON_CLOSED;
@@ -218,7 +218,7 @@ Middleware middleware;
 		JNIEnv *env, jclass cls) {
 	Connection &conn = *Middleware::g_conn_manager.getConnection(0);
 	string cauthCode = conn.authorizationCode();
-	jstring authCode = string2jstring(env, cauthCode);
+	jstring authCode = YzHelper::string2jstring(env, cauthCode);
 	return authCode;
 }
 /*

@@ -4,15 +4,14 @@
  *  Created on: Jul 17, 2013
  *      Author: lookflying
  */
+#ifndef YZHELPER_H
+#define YZHELPER_H
 #include <jni.h>
 #include <string>
 
 #include "message/message.h"
 #include "Connection.h"
 #include "ConnectionManager.h"
-
-#ifndef YZERR_H_
-#define YZERR_H_
 
 #define YZ_OK			(0)		//成功
 #define YZ_CON_CLOSED	(-2)	//连接已关闭
@@ -51,76 +50,87 @@
 #define YZMSGID_DISPATCH_ASK					0X8302
 #define YZMSGID_ASK_RESPONSE					0X0302
 #define YZMSGID_POI								0X8103//poi下发
-/**
- * printf to logcat
- */
-void logcatf(const char* fmt, ...);
-/**
- * print hex
- */
-void logcat_hex(const char* buf, unsigned int len);
-/**
- * jstring to string
- */
-std::string jstring2string(JNIEnv* env, jstring jstr);
-/**
- * string to jstring
- */
-jstring string2jstring(JNIEnv* env, const std::string str);
+class YzHelper {
+	static char logcat_buf[1024];
+public:
+	/**
+	 * printf to logcat
+	 */
+	static void logcatf(const char* fmt, ...);
+	/**
+	 * print hex
+	 */
+	static void logcat_hex(const char* buf, unsigned int len);
+	/**
+	 * jstring to string
+	 */
+	static std::string jstring2string(JNIEnv* env, jstring jstr);
+	/**
+	 * string to jstring
+	 */
+	static jstring string2jstring(JNIEnv* env, const std::string str);
 
-/**
- * 将string中的内容封装为msg_body_t, 不进行内存拷贝
- */
-msg_body_t string2msg_body(std::string content);
+	/**
+	 * 将string中的内容封装为msg_body_t, 不进行内存拷贝
+	 */
+	static msg_body_t string2msg_body(std::string content);
 
-/**
- * 将字符串复制到指定长度得buf中，字符串长度不足时，自动补0
- */
-void string2bytes(const std::string str, MSG_BYTE* target, unsigned int len);
+	/**
+	 * 将字符串复制到指定长度得buf中，字符串长度不足时，自动补0
+	 */
+	static void string2bytes(const std::string str, MSG_BYTE* target,
+			unsigned int len);
 
-/**
- * 序列化LocationStruct至string
- */
-std::string locationStruct2string(JNIEnv* env, jobject loc);
+	/**
+	 * 序列化LocationStruct至string
+	 */
+	static std::string locationStruct2string(JNIEnv* env, jobject loc);
 
-/**
- *序列化VehicleDataStruct至string
- */
-std::string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data);
+	/**
+	 *序列化VehicleDataStruct至string
+	 */
+	static std::string vehicleDataStruct2string(JNIEnv* env,
+			jobject vehicle_data);
 
-/**
- *获取对象int型字段
- */
-jint getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field);
-/**
- *获取对象long型字段
+	/**
+	 *获取对象int型字段
+	 */
+	static jint getIntField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field);
+	/**
+	 *获取对象long型字段
 
- */
+	 */
 
-jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field);
-jfloat getFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field);
-void setIntField(JNIEnv *env, jclass cls, jobject obj, const char* field,
-		jint value);
-void setLongField(JNIEnv *env, jclass cls, jobject obj, const char* field,
-		jlong value);
-void setDoubleField(JNIEnv *env, jclass cls, jobject obj, const char* field,
-		jdouble value);
-void setDoubleField(JNIEnv *env, jclass cls, jobject obj, const char* field,
-		jdouble value);
-void setFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field,
-		jfloat value);
-jstring getStringField(JNIEnv *env, jclass cls, jobject obj, const char* field);
+	static jlong getLongField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field);
+	static jfloat getFloatField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field);
+	static jdouble getDoubleField(JNIEnv *env, jclass cls,
+			jobject obj, const char* field);
+	static void setIntField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field, jint value);
+	static void setLongField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field, jlong value);
+	static void setDoubleField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field, jdouble value);
+	static void setFloatField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field, jfloat value);
+	static jstring getStringField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field);
 
-void setStringField(JNIEnv *env, jclass cls, jobject obj, const char* field,
-		jstring value);
+	static void setStringField(JNIEnv *env, jclass cls, jobject obj,
+			const char* field, jstring value);
 
-/**
- * 将字节数组转换为string
- */
-std::string jbyteArray2string(JNIEnv *env, jbyteArray array);
+	/**
+	 * 将字节数组转换为string
+	 */
+	static std::string jbyteArray2string(JNIEnv *env, jbyteArray array);
 
-/**
- * 从msg_body获取poi struct
- */
-jobject msg2poi(JNIEnv* env,const msg_body_t &msg);
-#endif /* YZERR_H_ */
+	/**
+	 * 从msg_body获取poi struct
+	 */
+	static jobject msg2poi(JNIEnv* env, const msg_body_t &msg);
+};
+
+#endif /* YZHELPER_H*/

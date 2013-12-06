@@ -10,12 +10,12 @@ using namespace std;
 /**
  * logcat buffer
  */
-char logcat_buf[1024];
+char YzHelper::logcat_buf[1024];
 
 /**
  * printf to logcat
  */
-void logcatf(const char* fmt, ...) {
+void YzHelper::logcatf(const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
 	vsnprintf(logcat_buf, sizeof(logcat_buf), fmt, args);
@@ -23,7 +23,7 @@ void logcatf(const char* fmt, ...) {
 	__android_log_write(ANDROID_LOG_DEBUG, "logcatf", logcat_buf);
 }
 
-void logcat_hex(const char* buf, unsigned int len) {
+void YzHelper::logcat_hex(const char* buf, unsigned int len) {
 	int pos = 0;
 	for (unsigned int i = 0; i < len; ++i) {
 		snprintf(logcat_buf + 3 * i, sizeof(logcat_buf) - 3 * i, "%02x ",
@@ -36,7 +36,7 @@ void logcat_hex(const char* buf, unsigned int len) {
 /**
  * jstring to string
  */
-string jstring2string(JNIEnv* env, jstring jstr) {
+string YzHelper::jstring2string(JNIEnv* env, jstring jstr) {
 	const char *cptr = env->GetStringUTFChars(jstr, 0);
 	jsize len = env->GetStringUTFLength(jstr);
 	string str = "";
@@ -48,7 +48,7 @@ string jstring2string(JNIEnv* env, jstring jstr) {
 /**
  * string to jstring
  */
-jstring string2jstring(JNIEnv* env, const string str) {
+jstring YzHelper::string2jstring(JNIEnv* env, const string str) {
 	jclass strClass = env->FindClass("java/lang/String");
 	jmethodID ctorID = env->GetMethodID(strClass, "<init>",
 			"([BLjava/lang/String;)V");
@@ -58,13 +58,13 @@ jstring string2jstring(JNIEnv* env, const string str) {
 	return (jstring) env->NewObject(strClass, ctorID, bytes, encoding);
 }
 
-msg_body_t string2msg_body(std::string content) {
+msg_body_t YzHelper::string2msg_body(std::string content) {
 	msg_body_t body;
 	body.content = (MSG_BYTE*) &content.c_str()[0];
 	body.length = content.size();
 	return body;
 }
-void string2bytes(const std::string str, MSG_BYTE* target, unsigned int len) {
+void YzHelper::string2bytes(const std::string str, MSG_BYTE* target, unsigned int len) {
 	if (str.size() >= len) {
 		memcpy(target, str.c_str(), len);
 	} else {
@@ -73,7 +73,7 @@ void string2bytes(const std::string str, MSG_BYTE* target, unsigned int len) {
 	}
 }
 
-string locationStruct2string(JNIEnv* env, jobject loc) {
+string YzHelper::locationStruct2string(JNIEnv* env, jobject loc) {
 	MSG_DWORD upload_alarm_status = 0;
 	MSG_DWORD upload_status = 0;
 	MSG_BCD upload_time[6];
@@ -170,63 +170,63 @@ string locationStruct2string(JNIEnv* env, jobject loc) {
 	return message;
 }
 
-jint getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
+jint YzHelper::getIntField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "I");
 	return env->GetIntField(obj, field_id);
 }
 
-void setIntField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+void YzHelper::setIntField(JNIEnv *env, jclass cls, jobject obj, const char* field,
 		jint value) {
 	jfieldID field_id = env->GetFieldID(cls, field, "I");
 	env->SetIntField(obj, field_id, value);
 }
 
-jlong getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
+jlong YzHelper::getLongField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "J");
 	return env->GetLongField(obj, field_id);
 }
 
-void setLongField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+void YzHelper::setLongField(JNIEnv *env, jclass cls, jobject obj, const char* field,
 		jlong value) {
 	jfieldID field_id = env->GetFieldID(cls, field, "J");
 	env->SetLongField(obj, field_id, value);
 }
 
-jdouble getDoubleField(JNIEnv *env, jclass cls, jobject obj,
+jdouble YzHelper::getDoubleField(JNIEnv *env, jclass cls, jobject obj,
 		const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "D");
 	return env->GetDoubleField(obj, field_id);
 }
 
-void setDoubleField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+void YzHelper::setDoubleField(JNIEnv *env, jclass cls, jobject obj, const char* field,
 		jdouble value) {
 	jfieldID field_id = env->GetFieldID(cls, field, "D");
 	env->SetDoubleField(obj, field_id, value);
 }
 
-jfloat getFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
+jfloat YzHelper::getFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "F");
 	return env->GetFloatField(obj, field_id);
 }
-void setFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+void YzHelper::setFloatField(JNIEnv *env, jclass cls, jobject obj, const char* field,
 		jfloat value) {
 	jfieldID field_id = env->GetFieldID(cls, field, "F");
 	env->SetFloatField(obj, field_id, value);
 }
 
-jstring getStringField(JNIEnv *env, jclass cls, jobject obj,
+jstring YzHelper::getStringField(JNIEnv *env, jclass cls, jobject obj,
 		const char* field) {
 	jfieldID field_id = env->GetFieldID(cls, field, "Ljava/lang/String;");
 	return (jstring)env->GetObjectField(obj, field_id);
 }
 
-void setStringField(JNIEnv *env, jclass cls, jobject obj, const char* field,
+void YzHelper::setStringField(JNIEnv *env, jclass cls, jobject obj, const char* field,
 		jstring value) {
 	jfieldID field_id = env->GetFieldID(cls, field, "Ljava/lang/String;");
 	env->SetObjectField(obj, field_id, value);
 }
 
-string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
+string YzHelper::vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
 	string message = "";
 	jclass cls = env->GetObjectClass(vehicle_data);
 	jint speed = getIntField(env, cls, vehicle_data, "speed");
@@ -370,7 +370,7 @@ string vehicleDataStruct2string(JNIEnv* env, jobject vehicle_data) {
 	return message;
 }
 
-string jbyteArray2string(JNIEnv *env, jbyteArray array) {
+string YzHelper::jbyteArray2string(JNIEnv *env, jbyteArray array) {
 	unsigned int len = env->GetArrayLength(array);
 	jbyte *buf = new (nothrow) jbyte[len + 1];
 	if (buf == NULL) {
@@ -383,7 +383,7 @@ string jbyteArray2string(JNIEnv *env, jbyteArray array) {
 	return str;
 }
 
-jobject msg2poi(JNIEnv* env, const msg_body_t & msg) {
+jobject YzHelper::msg2poi(JNIEnv* env, const msg_body_t & msg) {
 	jobject poi = env->AllocObject(Middleware::g_poi_cls);
 	jclass cls = env->GetObjectClass(poi);
 	MSG_DWORD latitude, longtitude;
